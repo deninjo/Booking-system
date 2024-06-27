@@ -64,9 +64,9 @@ def main():
 
     while True:
         # Prompt user to select a seat
-        selected_seat = input("\nSelect a seat (e.g., A1) or type 'exit' to quit: ").strip().upper()
+        selected_seat = input("\nSelect a seat (e.g., A1) or type 'q' to quit: ").strip().upper()
 
-        if selected_seat.lower() == 'exit':
+        if selected_seat.lower() == 'q':
             break
 
         # Validate the selected seat
@@ -91,6 +91,11 @@ def main():
                 print("Seat already selected. Choose a different seat.")
         else:
             print("Invalid seat number. Please try again.")
+
+    if selected_seats:
+        print(f"Your selected seats are: {selected_seats}")
+    else:
+        print("No selected seats")
 
 
 main()

@@ -34,8 +34,7 @@ def print_seat_numbers(rows, row_ranges, max_range, selected_seats=None):
         # Get number of seats in the current row
         num_seats = row_ranges[row_letter]
 
-        # Generate seat number using
-        # temporary variable to store the seat numbers for the current row being processed.
+        # Generate a list of seat numbers for a particular row
         seats = [f"{row_letter}{j}" for j in range(1, num_seats + 1)]
 
         # Mark the selected seats with *
@@ -43,16 +42,16 @@ def print_seat_numbers(rows, row_ranges, max_range, selected_seats=None):
             if selected_seat in seats:
                 seats[seats.index(selected_seat)] = "**"
 
-        # Create a single string of seat numbers separated by spaces
+        # Converting seat numbers to a single string separated by spaces
         seat_row = '  '.join(seats)
 
-        # total width(elements) of the seat row to determine padding to center row
+        # total width of the seat row to determine padding to center row
         seat_row_width = len(seat_row)
 
         # Calculate padding to center the seat row
         padding = (max_range * 5 - seat_row_width) // 2
 
-        print(' ' * padding + seat_row)
+        print((' ' * padding) + seat_row)
 
 
 def main():
@@ -72,7 +71,6 @@ def main():
         # Validate the selected seat
         row = selected_seat[0] if len(selected_seat) > 0 else ''
         number = selected_seat[1:] if len(selected_seat) > 1 else ''
-
 
         if row in row_ranges and number.isdigit() and 1 <= int(number) <= row_ranges[row]:
             if selected_seat not in selected_seats:

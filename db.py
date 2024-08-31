@@ -20,7 +20,7 @@ mydb.commit()
 name = input("Enter name: ")
 email = input("Enter email address: ")
 phone_number = input("Enter phone number: ")
-student = input("Is student? [0]No  [1]Yes : ")
+student = input("Is student? [0] No  [1] Yes : ")
 
 insert = ("INSERT INTO customer_details(name, email, phone_number, student)"
           "VALUES"

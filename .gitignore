@@ -1,0 +1,4 @@
+#ignore these files in current directory
+__pycache__/
+prac.py
+relevant.txt

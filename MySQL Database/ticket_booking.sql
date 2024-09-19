@@ -221,6 +221,29 @@ CREATE TEMPORARY TABLE IF NOT EXISTS debug_log (
 TRUNCATE TABLE debug_log;
 SELECT * FROM debug_log;
 
+-- showtimes for movies
+SELECT show_time.showtime_id, movie.title, show_time.start_time, show_time.show_date
+FROM show_time
+JOIN movie
+ON show_time.movie_id = movie.movie_id;
+
+-- showtime for specific movie
+SELECT show_time.showtime_id, movie.title, show_time.start_time, show_time.show_date
+FROM show_time
+JOIN movie
+ON show_time.movie_id = movie.movie_id
+WHERE movie.title = 'Pulp Fiction';
+
+-- showtime + screen type
+SELECT show_time.showtime_id, movie.title, theatre.screen, show_time.start_time, show_time.show_date
+FROM show_time
+JOIN movie ON show_time.movie_id = movie.movie_id
+JOIN theatre ON show_time.theatre_id = theatre.theatre_id
+WHERE movie.title = 'Pulp Fiction';
+
+
+
+
 
 
 

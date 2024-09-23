@@ -208,8 +208,9 @@ VALUES('B009', 103, 'WE-N','IIA', 'G5', 'Cancelled');
 
 
 DELETE FROM booking where booking_id = 'B007';
-
 SELECT * FROM booking;
+
+ALTER TABLE ticket_booking.customer AUTO_INCREMENT = 105;
 
 
 CREATE TEMPORARY TABLE IF NOT EXISTS debug_log (

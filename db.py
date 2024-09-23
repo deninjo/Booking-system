@@ -12,6 +12,7 @@ def get_db_connection():
         )
         print("Connection successful.")
         return mydb
+
     # Error message if the connection fails
     except mysql.connector.Error as err:
         print(f"Error: {err}")
@@ -31,6 +32,3 @@ def show_tables():
 
     mycursor.close()
     mydb.close()
-
-
-

@@ -42,7 +42,7 @@ CREATE TABLE show_time(
     theatre_id VARCHAR(4) NOT NULL,
     show_date DATE NOT NULL,
     start_time TIME NOT NULL,
-    PRIMARY KEY(showtime_id),
+    PRIMARY KEY(showtime_id, movie_id),
     FOREIGN KEY(movie_id) REFERENCES movie(movie_id) ON DELETE CASCADE,
     FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE
 );
@@ -53,7 +53,7 @@ CREATE TABLE seat(
     theatre_id VARCHAR(4) NOT NULL,
     row_letter VARCHAR(1) NOT NULL,
     number INT NOT NULL,
-    PRIMARY KEY(seat_id),
+    PRIMARY KEY(seat_id, theatre_id),
     FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE
 );
 ALTER TABLE seat
@@ -76,6 +76,7 @@ CREATE TABLE booking(
     booking_id VARCHAR(5) NOT NULL,
     customer_id INT NOT NULL,
     showtime_id VARCHAR(5) NOT NULL,
+    theatre_id VARCHAR(4) NOT NULL,
     booked_seat VARCHAR(4) NOT NULL,
     total_price DECIMAL(5,2) NOT NULL,
     booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -83,8 +84,10 @@ CREATE TABLE booking(
     PRIMARY KEY(booking_id),
     FOREIGN KEY(customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
     FOREIGN KEY(showtime_id) REFERENCES show_time(showtime_id) ON DELETE CASCADE,
+    FOREIGN KEY (theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE,
     FOREIGN KEY(booked_seat) REFERENCES seat(seat_id) ON DELETE CASCADE
 );
+
 ALTER TABLE booking
 ADD theatre_id VARCHAR(4) NULL AFTER showtime_id,
 ADD CONSTRAINT fk_theatre
@@ -94,11 +97,21 @@ ADD CONSTRAINT fk_theatre
 ALTER TABLE booking
 MODIFY booked_seat VARCHAR(4) NOT NULL;
 
-
 DROP TABLE booking;
 
 
--- inserting values to tables
+-- Debugging Table for booking table
+CREATE TEMPORARY TABLE IF NOT EXISTS debug_log (
+    log_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    log_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    message TEXT
+);
+
+TRUNCATE TABLE debug_log; -- clears records
+SELECT * FROM debug_log;
+
+
+-- inserting values to customer table
 INSERT INTO customer(customer_id, name, email, phone_number, student, password)
 VALUES
 (101, "Kaskazini McOure", 'kaskazini@gmail.com', '0712345678', 0, 'xxxxx');
@@ -121,7 +134,7 @@ SET customer_id = 104
 WHERE customer_id = 105;
 
 
-
+-- inserting values to movie table
 INSERT INTO movie
 VALUES (701, 'Pulp Fiction', 'Drug Crime', 'R', 8.9, 154, 1994);
 INSERT INTO movie(title, genre, rating, IMDB, duration, year_of_release)
@@ -131,10 +144,10 @@ VALUES ('Reservoir Dogs', 'Crime', 'R', 8.3, 99, 1992);
 INSERT INTO movie(title, genre, rating, IMDB, duration, year_of_release)
 VALUES ('The Prestige', 'Mystery', 'PG-13', 8.5, 130, 2006);
 
-
 SELECT * FROM movie;
 
 
+-- inserting values to theatre table
 INSERT INTO theatre
 VALUES ('IA', '2D', "'A': 10, 'B': 10, 'C': 12, 'D': 14, 'E': 14, 'F': 14, 'G': 16, 'H': 16");
 INSERT INTO theatre
@@ -149,12 +162,15 @@ where theatre_id = 'IIB';
 SELECT * FROM theatre;
 
 
+-- inserting values to show_time
 INSERT INTO show_time
 VALUES
 ('WD-M', 701, 'IIB', '2024-9-11', '10:45:00');
 
 SELECT * FROM show_time;
 
+
+-- inserting values to price table
 INSERT INTO price
 VALUES ('P01', 'WD-M', 'Front', 450.00);
 INSERT INTO price
@@ -194,17 +210,21 @@ SELECT * FROM price ORDER BY price_id ASC;
 DELETE FROM price WHERE price_id = 'P9';
 
 
+-- inserting values to seat table 
 INSERT INTO seat VALUES ('A1', 'IA', 'A', 1);
-INSERT INTO seat VALUES ('G5', 'IA', 'G', 5);
-INSERT INTO seat VALUES ('G2', 'IB', 'G', 5);
+INSERT INTO seat VALUES ('E5', 'IIB', 'E', 5);
+INSERT INTO seat VALUES ('H12', 'IA', 'H', 12);
 
 
+-- inserting values to booking table
+INSERT INTO booking(booking_id, customer_id, showtime_id, theatre_id, booked_seat, status)
+VALUES('B001', 101, 'WE-N','IA', 'H12', 'Confirmed');
 
 INSERT INTO booking(booking_id, customer_id, showtime_id, theatre_id, booked_seat, status)
-VALUES('B008', 101, 'WE-N','IA', 'H12', 'Confirmed');
+VALUES('B002', 103, 'WD-A','IIA', 'E5', 'Cancelled');
 
 INSERT INTO booking(booking_id, customer_id, showtime_id, theatre_id, booked_seat, status)
-VALUES('B009', 103, 'WE-N','IIA', 'G5', 'Cancelled');
+VALUES('B003', 102, 'WD-M','IA', 'H12', 'Confirmed');
 
 
 DELETE FROM booking where booking_id = 'B007';
@@ -213,14 +233,7 @@ SELECT * FROM booking;
 ALTER TABLE ticket_booking.customer AUTO_INCREMENT = 105;
 
 
-CREATE TEMPORARY TABLE IF NOT EXISTS debug_log (
-    log_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    log_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    message TEXT
-);
 
-TRUNCATE TABLE debug_log;
-SELECT * FROM debug_log;
 
 -- showtimes for movies
 SELECT show_time.showtime_id, movie.title, theatre.screen, show_time.start_time, show_time.show_date

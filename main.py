@@ -1,5 +1,5 @@
 # Import the Customer class
-from records import Customer, Movie, Theatre
+from records import Customer, Movie, Theatre, Showtime, Seat
 
 
 # ------------------------------------------Customer-------------------------------------------------#
@@ -52,7 +52,8 @@ movie = Movie(title, genre, rating, imdb, duration, year_of_release)
 movie.save_to_db()
 '''
 
-'''movie = Movie()
+'''
+movie = Movie()
 movie.input_details()
 movie.save_to_db()'''
 
@@ -77,8 +78,29 @@ print("Theatre layout before saving to DB:", theatre.layout)  # Debug print
 theatre.save_to_db()
 theatre.get_seating_chart()
 '''
+
+'''
 theatre = Theatre()
 theatre.input_details()
 print("Theatre layout before saving to DB:", theatre.layout)  # Debug print
 theatre.save_to_db()
 theatre.get_seating_chart()
+'''
+
+
+# --------------------------------------SHOWTIME-------------------------------------------#
+'''show1 = Showtime()
+show1.input_details()
+show1.save_to_db()'''
+
+
+# -------------------------------seats x theatre-----------------------------------#
+# Create an empty Theatre instance
+theatre = Theatre()
+
+# Load theatre details using theatre_id from the database
+theatre_id = input("Enter the theatre ID to load: ")
+if theatre.load_from_db(theatre_id):
+    # Create a Seat instance for seat selection using the loaded theatre
+    seat_manager = Seat(theatre)
+    seat_manager.select_seat()

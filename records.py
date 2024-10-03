@@ -99,7 +99,83 @@ class Movie:
             mydb.close()
 
     def get_showtimes(self):
-        pass
+        # Use centralized db connection from get_db_connection()
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return False
+
+        try:
+            mycursor = mydb.cursor(dictionary=True)
+
+            # SQL query to retrieve showtimes for movies
+            select = """
+            SELECT show_time.showtime_id, movie.movie_id, movie.title, 
+                   theatre.theatre_id, theatre.screen, show_time.start_time, 
+                   show_time.show_date
+            FROM show_time
+            JOIN movie ON show_time.movie_id = movie.movie_id
+            JOIN theatre ON show_time.theatre_id = theatre.theatre_id;
+            """
+            mycursor.execute(select)
+            results = mycursor.fetchall()  # Fetch all matching records
+
+            # If valid records are found, process and display them
+            if results:
+                showtimes = []
+                for result in results:
+                    # a dictionary is created for each row.
+                    showtime_record = {
+                        "showtime_id": result["showtime_id"],
+                        "movie_id": result["movie_id"],
+                        "title": result["title"],
+                        "theatre_id": result["theatre_id"],
+                        "screen": result["screen"],
+                        "start_time": result["start_time"],
+                        "show_date": result["show_date"]
+                    }
+                    showtimes.append(showtime_record)
+
+                return showtimes  # Return the list of showtime records
+            else:
+                print("No showtimes found.")
+                return []
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return []
+        finally:
+            # Close cursor and connection
+            mycursor.close()
+            mydb.close()
+
+    def display_available_movies_with_showtimes(self):
+        showtimes = self.get_showtimes()  # Get showtimes for the movie
+
+        if not showtimes:
+            print("No showtimes available.")
+            return
+
+        # Grouping by movie title for better display
+        movies = {}
+        for showtime in showtimes:
+            title = showtime["title"]
+            movie_id = showtime["movie_id"]
+            if title not in movies:
+                movies[title] = {"movie_id": movie_id, "showtimes": []}
+            movies[title]["showtimes"].append(showtime)
+
+        # Displaying the movies with their showtimes
+        print("Available Movies with Showtimes:")
+        for title, data in movies.items():
+            movie_id = data["movie_id"]
+            print(f"\nMovie: {title}   ID: {movie_id}")
+            for showtime in data["showtimes"]:
+                print(f"  Showtime ID: {showtime['showtime_id']}, "
+                      f"Theatre: {showtime['theatre_id']}, "
+                      f"Screen: {showtime['screen']}, "
+                      f"Date: {showtime['show_date']}, "
+                      f"Start Time: {showtime['start_time']}")
 
 
 class Theatre:
@@ -130,6 +206,7 @@ class Theatre:
 
     def load_from_db(self, theatre_id):
         # Use centralized db connection from get_db_connection()
+        global mycursor
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -357,4 +434,51 @@ class Seat:
 
 
 class Price:
-    pass
+    def __init__(self, price_id="", showtime_id="", seat_category="", price=0):
+        self.price_id = price_id
+        self.showtime_id = showtime_id
+        self.seat_category = seat_category
+        self.price = price
+
+    def load_from_db(self, showtime_id):
+        # Use centralized db connection from get_db_connection()
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return False
+
+        try:
+            mycursor = mydb.cursor(dictionary=True)
+
+            # SQL query to retrieve price details for a specific showtime
+            select = "SELECT * FROM price WHERE showtime_id = %s"
+            mycursor.execute(select, (showtime_id,))
+            results = mycursor.fetchall()  # Fetch all matching records
+
+            # If valid records are found, load them into the object
+            if results:
+                for result in results:
+                    price_record = Price()  # Create a new Price object for each record
+                    price_record.price_id = result["price_id"]
+                    price_record.showtime_id = result["showtime_id"]
+                    price_record.seat_category = result["seat_category"]
+                    price_record.price = result["price"]
+
+                    # You might want to store these records in a list or do something with them
+                    print(f"Loaded Price Record: ID={price_record.price_id}, Showtime={price_record.showtime_id}, "
+                          f"Category={price_record.seat_category}, Price={price_record.price}")
+
+                return True
+            else:
+                print(f"No prices found for Showtime ID: {showtime_id}")
+                return False
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return False
+        finally:
+            # Close cursor and connection
+            mycursor.close()
+            mydb.close()
+
+    def alter_price(self):
+        pass

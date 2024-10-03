@@ -1,5 +1,5 @@
 # Import the Customer class
-from records import Customer, Movie, Theatre, Showtime, Seat
+from records import Customer, Movie, Theatre, Showtime, Seat, Price
 
 
 # ------------------------------------------Customer-------------------------------------------------#
@@ -58,6 +58,10 @@ movie.input_details()
 movie.save_to_db()'''
 
 
+# ----------------movies x showtimes---------------------#
+movie = Movie()
+movie.display_available_movies_with_showtimes()
+
 # -------------------------------THEATRE-----------------------------------#
 '''
 # Example usage
@@ -95,6 +99,7 @@ show1.save_to_db()'''
 
 
 # -------------------------------seats x theatre-----------------------------------#
+'''
 # Create an empty Theatre instance
 theatre = Theatre()
 
@@ -104,3 +109,14 @@ if theatre.load_from_db(theatre_id):
     # Create a Seat instance for seat selection using the loaded theatre
     seat_manager = Seat(theatre)
     seat_manager.select_seat()
+'''
+
+
+# ---------------------------price---------------------------------------#
+'''
+price = Price()
+price.load_from_db("WD-N")
+'''
+
+
+

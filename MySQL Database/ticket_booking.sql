@@ -76,6 +76,7 @@ CREATE TABLE booking(
     booking_id VARCHAR(5) NOT NULL,
     customer_id INT NOT NULL,
     showtime_id VARCHAR(5) NOT NULL,
+    movie_id INT NOT NULL,
     theatre_id VARCHAR(4) NOT NULL,
     booked_seat VARCHAR(4) NOT NULL,
     total_price DECIMAL(5,2) NOT NULL,
@@ -84,6 +85,7 @@ CREATE TABLE booking(
     PRIMARY KEY(booking_id),
     FOREIGN KEY(customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
     FOREIGN KEY(showtime_id) REFERENCES show_time(showtime_id) ON DELETE CASCADE,
+    FOREIGN KEY(movie_id) REFERENCES movie(movie_id) ON DELETE CASCADE,
     FOREIGN KEY (theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE,
     FOREIGN KEY(booked_seat) REFERENCES seat(seat_id) ON DELETE CASCADE
 );
@@ -161,6 +163,21 @@ DELETE FROM theatre
 where theatre_id = 'IIB';
 SELECT * FROM theatre;
 
+UPDATE theatre
+SET layout = '{"A": 10, "B": 10, "C": 12, "D": 14, "E": 14, "F": 14, "G": 16, "H": 16}'
+WHERE theatre_id = 'IA';
+
+UPDATE theatre
+SET layout = '{"A": 10, "B": 10, "C": 12, "D": 14, "E": 14, "F": 14, "G": 16}'
+WHERE theatre_id = 'IB';
+
+UPDATE theatre
+SET layout = '{"A": 12, "B": 12, "C": 12, "D": 14, "E": 14, "F": 14, "G": 16, "H": 16}'
+WHERE theatre_id = 'IIA';
+
+UPDATE theatre
+SET layout = '{"A": 12, "B": 12, "C": 12, "D": 14, "E": 14, "F": 14, "G": 16}'
+WHERE theatre_id = 'IIB';
 
 -- inserting values to show_time
 INSERT INTO show_time
@@ -208,6 +225,7 @@ VALUES ('P15', 'WE-N', 'Rear', 850.00);
 
 SELECT * FROM price ORDER BY price_id ASC;
 DELETE FROM price WHERE price_id = 'P9';
+TRUNCATE price;
 
 
 -- inserting values to seat table 
@@ -217,8 +235,8 @@ INSERT INTO seat VALUES ('H12', 'IA', 'H', 12);
 
 
 -- inserting values to booking table
-INSERT INTO booking(booking_id, customer_id, showtime_id, theatre_id, booked_seat, status)
-VALUES('B001', 101, 'WE-N','IA', 'H12', 'Confirmed');
+INSERT INTO booking(booking_id, customer_id, showtime_id, movie_id, theatre_id, booked_seat, status)
+VALUES('B001', 101, 'WD-A', 702, 'IA', 'H12', 'Confirmed');
 
 INSERT INTO booking(booking_id, customer_id, showtime_id, theatre_id, booked_seat, status)
 VALUES('B002', 103, 'WD-A','IIA', 'E5', 'Cancelled');
@@ -226,7 +244,7 @@ VALUES('B002', 103, 'WD-A','IIA', 'E5', 'Cancelled');
 INSERT INTO booking(booking_id, customer_id, showtime_id, theatre_id, booked_seat, status)
 VALUES('B003', 102, 'WD-M','IA', 'H12', 'Confirmed');
 
-
+TRUNCATE booking;
 DELETE FROM booking where booking_id = 'B007';
 SELECT * FROM booking;
 
@@ -236,7 +254,7 @@ ALTER TABLE ticket_booking.customer AUTO_INCREMENT = 105;
 
 
 -- showtimes for movies
-SELECT show_time.showtime_id, movie.title, theatre.screen, show_time.start_time, show_time.show_date
+SELECT show_time.showtime_id, movie.movie_id, movie.title,theatre.theatre_id, theatre.screen, show_time.start_time, show_time.show_date
 FROM show_time
 JOIN movie ON show_time.movie_id = movie.movie_id
 JOIN theatre ON show_time.theatre_id = theatre.theatre_id;
@@ -254,6 +272,9 @@ FROM show_time
 JOIN movie ON show_time.movie_id = movie.movie_id
 JOIN theatre ON show_time.theatre_id = theatre.theatre_id
 WHERE movie.title = 'Pulp Fiction';
+
+
+
 
 
 

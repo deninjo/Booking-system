@@ -2,8 +2,7 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `booking_BEFORE_INSERT` BEFORE INSERT 
     DECLARE seat_category VARCHAR(15);
     DECLARE base_price DECIMAL(5,2);
     DECLARE is_student TINYINT(1);
-    DECLARE log_message TEXT;
-    
+
     -- Determine seat category based on the row letter of the booked seat
     SELECT row_letter INTO @row_letter
     FROM seat
@@ -20,32 +19,12 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `booking_BEFORE_INSERT` BEFORE INSERT 
         SET seat_category = 'Rear'; -- default to 'Rear' for any other rows
     END IF;
 
-    -- Log seat category and showtime_id
-    SET log_message = CONCAT(
-        'Determined Seat Category: ', seat_category, ', ',
-        'Showtime ID: ', NEW.showtime_id
-    );
-    INSERT INTO debug_log (message) VALUES (log_message);
-
-    -- Log the exact price lookup
-    SET log_message = CONCAT(
-        'Looking up price for Showtime ID: ', NEW.showtime_id, 
-        ' and Seat Category: ', seat_category
-    );
-    INSERT INTO debug_log (message) VALUES (log_message);
-
     -- Get the price from the price table based on showtime_id and seat category
     SELECT p.price INTO base_price
     FROM price p
     WHERE p.showtime_id = NEW.showtime_id
     AND p.seat_category = seat_category
     LIMIT 1;
-
-    -- Log the base price
-    SET log_message = CONCAT(
-        'Base Price Retrieved: ', base_price
-    );
-    INSERT INTO debug_log (message) VALUES (log_message);
 
     -- Check if the customer is a student
     SELECT student INTO is_student
@@ -59,15 +38,4 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `booking_BEFORE_INSERT` BEFORE INSERT 
     ELSE
         SET NEW.total_price = base_price;
     END IF;
-
-    -- Create a final log message
-    SET log_message = CONCAT(
-        'Final Seat Category: ', seat_category, ', ',
-        'Base Price: ', base_price, ', ',
-        'Is Student: ', is_student, ', ',
-        'Total Price: ', NEW.total_price
-    );
-
-    -- Insert the final log message into debug_log table
-    INSERT INTO debug_log (message) VALUES (log_message);
 END

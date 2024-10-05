@@ -10,7 +10,7 @@ def get_db_connection():
             password='MySQLconnection99!',
             database='ticket_booking'
         )
-        print("Connection successful.")
+        print(".")
         return mydb
 
     # Error message if the connection fails
@@ -32,3 +32,6 @@ def show_tables():
 
     mycursor.close()
     mydb.close()
+
+
+

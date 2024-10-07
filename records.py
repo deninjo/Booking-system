@@ -70,6 +70,12 @@ class Movie:
         self.rating = input("Enter movie rating: ")
         self.imdb = float(input("Enter imdb score: "))
         self.duration = int(input("Enter duration in minutes: "))
+
+        # Ensuring duration is a positive integer
+        while (self.duration) < 0 or not self.duration.isdigit():
+            print("Duration should be a positive integer")
+            self.duration = input("Enter duration in minutes: ")
+
         self.year_of_release = int(input("Enter year of release: "))
 
     def save_to_db(self):
@@ -182,31 +188,9 @@ class Theatre:
     def __init__(self, theatre_id="", screen="", layout=None):
         self.theatre_id = theatre_id
         self.screen = screen
-        self.layout = layout if layout else {}   # ensures that self.layout always holds a valid dictionary
-
-    def input_details(self):
-        self.theatre_id = input("Enter theatre name: ")
-        self.screen = input("Enter screen type (3D/2D): ")
-
-        # Validate screen type
-        while self.screen not in ['2D', '3D']:
-            print("Invalid input. Please enter 2D/3D.")
-            self.screen = input("Enter screen type (3D/2D): ")
-
-        # Prompting user to input layout as a dictionary in JSON format
-        layout_str = input("Enter layout as a dictionary (e.g., {\"A\": 10, \"B\": 12}): ")
-        while True:
-            try:
-                self.layout = json.loads(layout_str)
-                break  # Exit loop on success
-
-            except json.JSONDecodeError:
-                print("Invalid layout format. Please enter a valid dictionary in JSON format.")
-                return
+        self.layout = layout if layout else {}  # Ensures that self.layout always holds a valid dictionary
 
     def load_from_db(self, theatre_id):
-        # Use centralized db connection from get_db_connection()
-        global mycursor
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -214,22 +198,18 @@ class Theatre:
 
         try:
             mycursor = mydb.cursor(dictionary=True)
-
-            # SQL query to retrieve theatre details
             select = "SELECT * FROM theatre WHERE theatre_id = %s"
             mycursor.execute(select, (theatre_id,))
             result = mycursor.fetchone()
 
-            # If a valid record is found, it loads the theatre ID, screen type, and layout into the object
             if result:
                 self.theatre_id = result["theatre_id"]
                 self.screen = result["screen"]
                 layout_str = result["layout"]
 
-                # Check if layout is empty or not
                 if layout_str:
                     try:
-                        self.layout = json.loads(layout_str)  # Parse the layout from string to dictionary
+                        self.layout = json.loads(layout_str)
                     except json.JSONDecodeError:
                         print(f"Invalid JSON format in layout: {layout_str}")
                         return False
@@ -239,48 +219,17 @@ class Theatre:
 
                 return True
             else:
-                print(f"No theatre found with ID: {theatre_id}")
+                print("Theatre not found.")
                 return False
         except Exception as e:
             print(f"An error occurred: {e}")
             return False
         finally:
-            # Close cursor and connection
-            mycursor.close()
-            mydb.close()
-
-    def save_to_db(self):
-        # Use centralized db connection from get_db_connection()
-        mydb = get_db_connection()
-        if mydb is None:
-            print("Failed to connect to the database.")
-            return
-
-        mycursor = mydb.cursor()
-
-        # Format layout as a valid JSON string
-        layout_str = json.dumps(self.layout)  # Use json.dumps to ensure valid JSON format
-
-        # SQL query to insert theatre details
-        insert = ("INSERT INTO theatre (theatre_id, screen, layout) "
-                  "VALUES (%s, %s, %s)")
-        values = (self.theatre_id, self.screen, layout_str)
-
-        try:
-            # Execute and commit
-            mycursor.execute(insert, values)
-            mydb.commit()
-            print(mycursor.rowcount, "record inserted.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
-        finally:
-            # Close cursor and connection
             mycursor.close()
             mydb.close()
 
     def get_seating_chart(self, selected_seats=None):
-        if selected_seats is None:
-            selected_seats = []
+        booked_seats = self.fetch_booked_seats()  # Get booked seats from the database
 
         print(f"{' ' * 35}THEATRE {self.theatre_id}")
         print("             ====================================================")
@@ -291,35 +240,49 @@ class Theatre:
             print("Layout is empty. Please provide a valid layout.")
             return
 
-        # Determine the maximum number of seats in any row
         max_range = max(self.layout.values())
         rows = len(self.layout)
 
-        # seat letter - row label
         seat = string.ascii_uppercase
 
         for i in range(rows):
             row_letter = seat[i]
-
-            # Get number of seats in the current row
             num_seats = self.layout.get(row_letter, 0)
-
-            # Generate a list of seat numbers for a particular row
             seats = [f"{row_letter}{j}" for j in range(1, num_seats + 1)]
 
-            # Mark the selected seats with **
-            for selected_seat in selected_seats:
-                if selected_seat in seats:
-                    seats[seats.index(selected_seat)] = "**"
+            # Mark the booked seats with **
+            for booked_seat in booked_seats:
+                if booked_seat in seats:
+                    seats[seats.index(booked_seat)] = "**"
 
-            # Converting seat numbers to a single string separated by spaces
             seat_row = '  '.join(seats)
-
-            # Calculate padding to center the seat row
             seat_row_width = len(seat_row)
             padding = (max_range * 5 - seat_row_width) // 2
 
             print((' ' * padding) + seat_row)
+
+    def fetch_booked_seats(self):
+        booked_seats = []
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return booked_seats
+
+        try:
+            mycursor = mydb.cursor()
+            query = """SELECT booked_seat FROM booking WHERE theatre_id = %s AND status = 'Confirmed'"""
+            mycursor.execute(query, (self.theatre_id,))
+            results = mycursor.fetchall()
+            booked_seats = [result[0] for result in results]
+        except Exception as e:
+            print(f"An error occurred while fetching booked seats: {e}")
+        finally:
+            mycursor.close()
+            mydb.close()
+
+        return booked_seats
+
+
 
 
 class Showtime:
@@ -390,11 +353,13 @@ class Seat:
                 # Validate the seat selection
                 if row in self.theatre.layout and number.isdigit() and 1 <= int(number) <= self.theatre.layout[row]:
                     if selected_seat not in self.selected_seats:
-                        # Add the seat to the list of selected seats
-                        self.selected_seats.append(selected_seat)
-
-                        # Save the seat to the database
-                        self.save_to_db(selected_seat, row, number)
+                        # Check if the seat is already booked in the database
+                        if not self.is_seat_booked(selected_seat):
+                            # Add the seat to the list of selected seats
+                            self.selected_seats.append(selected_seat)
+                            print(f"Seat {selected_seat} selected.")
+                        else:
+                            print("Seat is already booked. Choose a different seat.")
                     else:
                         print("Seat already selected. Choose a different seat.")
                 else:
@@ -407,31 +372,25 @@ class Seat:
         else:
             print("No selected seats.")
 
-    def save_to_db(self, seat_id, row_letter, number):
-        # Use centralized db connection from get_db_connection()
+    def is_seat_booked(self, seat_id):
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
-            return
-
-        mycursor = mydb.cursor()
-
-        # SQL query to insert seat details
-        insert = ("INSERT INTO seat (seat_id, theatre_id, row_letter, number) "
-                  "VALUES (%s, %s, %s, %s)")
-        values = (seat_id, self.theatre.theatre_id, row_letter, int(number))
+            return False
 
         try:
-            # Execute and commit
-            mycursor.execute(insert, values)
-            mydb.commit()
-            print(f"Seat {seat_id} saved successfully.")
+            mycursor = mydb.cursor()
+            query = "SELECT COUNT(*) FROM booking WHERE booked_seat = %s AND status = 'Confirmed'"
+            mycursor.execute(query, (seat_id,))
+            return mycursor.fetchone()[0] > 0  # Return True if the seat is booked
         except Exception as e:
             print(f"An error occurred: {e}")
+            return False
         finally:
-            # Close cursor and connection
             mycursor.close()
             mydb.close()
+
+
 
 
 class Price:
@@ -499,7 +458,7 @@ class Booking:
         prefix = s[:-3]  # Extract the prefix ('B')
         number = int(s[-3:])  # Extract the number ('001') and convert to int
         incremented_number = number + 1
-        return f"{prefix}{incremented_number:03d}"  # returns three-digit string with leading zeros
+        return f"{prefix}{incremented_number:03d}"  # Returns three-digit string with leading zeros
 
     def get_last_customer_id(self):
         mydb = get_db_connection()
@@ -549,7 +508,7 @@ class Booking:
         self.booking_id = self.increment_string(last_booking_id)
 
         # Get available showtimes from the Movie class
-        movie_instance = Movie()  # Replace with actual movie instance
+        movie_instance = Movie()  # Create an instance of Movie
         showtimes = movie_instance.get_showtimes()
         if not showtimes:
             print("No showtimes available.")
@@ -569,13 +528,16 @@ class Booking:
 
         # Load the theatre details and select seats
         theatre_instance = Theatre()
-        theatre_instance.load_from_db(self.theatre_id)
+        if not theatre_instance.load_from_db(self.theatre_id):
+            print("Failed to load theatre details.")
+            return
+
         seat_instance = Seat(theatre_instance)
         seat_instance.select_seat()
 
-        # Ensure a seat was selected before proceeding
+        # Ensure at least one seat was selected before proceeding
         if seat_instance.selected_seats:
-            self.booked_seat = seat_instance.selected_seats[0]  # Assuming only one seat is selected
+            self.booked_seat = ", ".join(seat_instance.selected_seats)  # Join selected seats for booking
         else:
             print("No seats selected. Cannot proceed with booking.")
             return
@@ -615,6 +577,8 @@ class Booking:
         print(f"Movie ID: {self.movie_id}")
         print(f"Showtime ID: {self.showtime_id}")
         print(f"Theatre ID: {self.theatre_id}")
-        print(f"Booked Seat: {self.booked_seat}")
+        print(f"Booked Seats: {self.booked_seat}")  # Adjusted to display all booked seats
         print(f"Status: {self.status}")
         print("============================")
+
+

@@ -228,10 +228,13 @@ class Theatre:
             mycursor.close()
             mydb.close()
 
-    def get_seating_chart(self, selected_seats=None):
-        booked_seats = self.fetch_booked_seats()  # Get booked seats from the database
+    def get_seating_chart(self, selected_seats, showtime_id):
+        booked_seats = self.fetch_booked_seats(showtime_id)  # Get booked seats from the database
 
-        print(f"{' ' * 35}THEATRE {self.theatre_id}")
+        # Add newly selected seats to the booked seats for this display
+        booked_seats.update(selected_seats)  # Using a set for efficient lookups
+
+        print(f"\n{' ' * 35}THEATRE {self.theatre_id}")
         print("             ====================================================")
         print("                                   SCREEN")
         print("             ====================================================")
@@ -255,34 +258,42 @@ class Theatre:
                 if booked_seat in seats:
                     seats[seats.index(booked_seat)] = "**"
 
+            # Create the row display
             seat_row = '  '.join(seats)
             seat_row_width = len(seat_row)
             padding = (max_range * 5 - seat_row_width) // 2
 
             print((' ' * padding) + seat_row)
 
-    def fetch_booked_seats(self):
-        booked_seats = []
+
+    def fetch_booked_seats(self, showtime_id):
+        """Fetch booked seats for a specific showtime.
+        Returns:
+            set: A set of booked seat IDs.
+        """
+        booked_seats = list(set())  # Initialize an empty set to hold booked seats
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
             return booked_seats
-
         try:
             mycursor = mydb.cursor()
-            query = """SELECT booked_seat FROM booking WHERE theatre_id = %s AND status = 'Confirmed'"""
-            mycursor.execute(query, (self.theatre_id,))
-            results = mycursor.fetchall()
-            booked_seats = [result[0] for result in results]
+            query = """
+            SELECT booked_seat FROM booking 
+            WHERE showtime_id = %s AND theatre_id = %s
+            """
+            mycursor.execute(query, (showtime_id, self.theatre_id))
+
+            # Fetch all booked seats and add them to the set
+            booked_seats = {seat[0] for seat in mycursor.fetchall()}
+
         except Exception as e:
             print(f"An error occurred while fetching booked seats: {e}")
+
         finally:
-            mycursor.close()
-            mydb.close()
+            mycursor.close()  # Ensure cursor is closed to prevent memory leaks
 
-        return booked_seats
-
-
+        return booked_seats  # Return the set of booked seats
 
 
 class Showtime:
@@ -330,14 +341,14 @@ class Showtime:
 
 
 class Seat:
-    def __init__(self, theatre):
-        self.theatre = theatre  # Reference to the Theatre instance
+    def __init__(self, theatre_instance):
+        self.theatre = theatre_instance # Reference to the Theatre instance
         self.selected_seats = []
 
-    def select_seat(self):
+    def select_seat(self, showtime_id):
         while True:
             # Display the seating chart with the current selected seats
-            self.theatre.get_seating_chart(self.selected_seats)
+            self.theatre.get_seating_chart(self.selected_seats, showtime_id)
 
             # Prompt the user to select a seat
             selected_seat = input("\nSelect a seat (e.g., A1) or type 'q' to quit: ").strip().upper()
@@ -533,11 +544,20 @@ class Booking:
             return
 
         seat_instance = Seat(theatre_instance)
-        seat_instance.select_seat()
+        seat_instance.select_seat(self.showtime_id)
 
         # Ensure at least one seat was selected before proceeding
         if seat_instance.selected_seats:
             self.booked_seat = ", ".join(seat_instance.selected_seats)  # Join selected seats for booking
+
+            # Check and insert any new seats into the seat table
+            for selected_seat in seat_instance.selected_seats:
+                if not self.seat_exists(selected_seat):
+                    # Attempt to insert the seat and check for success
+                    if not self.insert_seat(selected_seat, self.theatre_id):
+                        print(f"Failed to insert seat {selected_seat}. Cannot proceed with booking.")
+                        return  # Exit if the seat insertion fails
+
         else:
             print("No seats selected. Cannot proceed with booking.")
             return
@@ -547,6 +567,48 @@ class Booking:
 
         # Save booking to the database
         self.save_to_db()
+
+    def seat_exists(self, seat_id):
+        """Check if the seat exists in the seat table."""
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return None
+
+        try:
+            mycursor =mydb.cursor()
+            query = "SELECT COUNT(*) FROM seat WHERE seat_id = %s"
+            mycursor.execute(query, (seat_id,))
+            exists = mycursor.fetchone()[0] > 0
+        except Exception as e:
+            print(f"An error occurred while checking for seat existence: {e}")
+            exists = False
+        finally:
+            mycursor.close()
+        return exists
+
+    def insert_seat(self, seat_id, theatre_id):
+        """Insert a new seat into the seat table."""
+        row_letter = seat_id[0]  # Assuming seat_id is formatted as 'F2', extract 'F'
+        number = int(seat_id[1:])
+
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return None
+
+        try:
+            mycursor = mydb.cursor()
+            query = "INSERT INTO seat (seat_id, theatre_id, row_letter, number) VALUES (%s, %s, %s, %s)"
+            mycursor.execute(query, (seat_id, theatre_id, row_letter, number))
+            mydb.commit()
+            print(f"Seat {seat_id} added to the seat table.")
+        except Exception as e:
+            print(f"An error occurred while inserting seat {seat_id}: {e}")
+            mydb.rollback()
+        finally:
+            mycursor.close()
+            mydb.close()
 
     def save_to_db(self):
         mydb = get_db_connection()

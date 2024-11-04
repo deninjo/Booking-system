@@ -112,6 +112,8 @@ CREATE TEMPORARY TABLE IF NOT EXISTS debug_log (
 TRUNCATE TABLE debug_log; -- clears records
 SELECT * FROM debug_log;
 
+SHOW TABLES;
+
 
 -- inserting values to customer table
 INSERT INTO customer(customer_id, name, email, phone_number, student, password)
@@ -257,7 +259,8 @@ ALTER TABLE ticket_booking.customer AUTO_INCREMENT = 105;
 SELECT show_time.showtime_id, movie.movie_id, movie.title,theatre.theatre_id, theatre.screen, show_time.start_time, show_time.show_date
 FROM show_time
 JOIN movie ON show_time.movie_id = movie.movie_id
-JOIN theatre ON show_time.theatre_id = theatre.theatre_id;
+JOIN theatre ON show_time.theatre_id = theatre.theatre_id
+ORDER BY show_time.showtime_id ASC;
 
 -- showtime for specific movie
 SELECT show_time.showtime_id, movie.title, show_time.start_time, show_time.show_date

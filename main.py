@@ -5,16 +5,15 @@ from records import Customer, Movie, Theatre, Showtime, Seat, Price, Booking
 from records import Customer, Movie, Theatre, Seat, Booking
 
 def main():
-    # Step 1: Create a Customer object and input details
-
+    # Step 1: Create a Customer object and input detaills
+    '''
     customer = Customer()
     customer.input_details()
     customer.save_to_db()
-
+    '''
 
     # Step 2: Create a Movie object and display available movies with showtimes
-    movie = Movie()
-    movie.display_available_movies_with_showtimes()
+
 
     # Step 3: Select a movie and showtime for booking
     booking = Booking()

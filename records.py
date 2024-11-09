@@ -513,67 +513,6 @@ class Booking:
             mycursor.close()
             mydb.close()
 
-    def create_booking(self):
-        # Get the customer ID of the last inserted record
-        self.customer_id = self.get_last_customer_id()
-        if not self.customer_id:
-            print("No customer records found.")
-            return
-
-        # Get the last booking ID and increment it
-        last_booking_id = self.get_last_booking_id()
-        self.booking_id = self.increment_string(last_booking_id)
-
-        # Get available showtimes from the Movie class
-        movie_instance = Movie()  # Create an instance of Movie
-        showtimes = movie_instance.get_showtimes()
-        if not showtimes:
-            print("No showtimes available.")
-            return
-
-        # Prompt the user to enter movie and showtime IDs
-        self.movie_id = input("Enter movie ID: ")
-        self.showtime_id = input("Enter showtime ID: ").upper()
-
-        # Retrieve theatre ID based on the selected showtime ID
-        selected_showtime = next((item for item in showtimes if item["showtime_id"] == self.showtime_id), None)
-        if selected_showtime:
-            self.theatre_id = selected_showtime["theatre_id"]
-        else:
-            print(f"No valid showtime found with ID: {self.showtime_id}")
-            return
-
-        # Load the theatre details and select seats
-        theatre_instance = Theatre()
-        if not theatre_instance.load_from_db(self.theatre_id):
-            print("Failed to load theatre details.")
-            return
-
-        seat_instance = Seat(theatre_instance)
-        seat_instance.select_seat(self.showtime_id)
-
-        # Ensure at least one seat was selected before proceeding
-        if seat_instance.selected_seats:
-            self.booked_seat = ", ".join(seat_instance.selected_seats)  # Join selected seats for booking
-
-            # Check and insert any new seats into the seat table
-            for selected_seat in seat_instance.selected_seats:
-                if not self.seat_exists(selected_seat):
-                    # Attempt to insert the seat and check for success
-                    if not self.insert_seat(selected_seat, self.theatre_id):
-                        print(f"Failed to insert seat {selected_seat}. Cannot proceed with booking.")
-                        return  # Exit if the seat insertion fails
-
-        else:
-            print("No seats selected. Cannot proceed with booking.")
-            return
-
-        # Print ticket
-        self.print_ticket()
-
-        # Save booking to the database
-        self.save_to_db()
-
     def seat_exists(self, seat_id):
         """Check if the seat exists in the seat table."""
         mydb = get_db_connection()
@@ -592,6 +531,29 @@ class Booking:
         finally:
             mycursor.close()
         return exists
+
+    def insert_seat(self, seat_id, theatre_id):
+        """Insert a new seat into the seat table."""
+        row_letter = seat_id[0]  # Assuming seat_id is formatted as 'F2', extract 'F'
+        number = int(seat_id[1:])
+
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return None
+
+        try:
+            mycursor = mydb.cursor()
+            query = "INSERT INTO seat (seat_id, theatre_id, row_letter, number) VALUES (%s, %s, %s, %s)"
+            mycursor.execute(query, (seat_id, theatre_id, row_letter, number))
+            mydb.commit()
+            print(f"Seat {seat_id} added to the seat table.")
+        except Exception as e:
+            print(f"An error occurred while inserting seat {seat_id}: {e}")
+            mydb.rollback()
+        finally:
+            mycursor.close()
+            mydb.close()
 
     def create_booking(self):
         # Step 1: Get the last customer ID
@@ -651,34 +613,18 @@ class Booking:
         if proceed == '1':
             self.booked_seat = ', '.join(seat_instance.selected_seats)
             self.status = "Confirmed"
-            self.save_to_db()  # Save booking to database
-            self.print_ticket()  # Print ticket
+
+            # Save booking to database and get the saved booking_id
+            booking_id = self.save_to_db()
+            if booking_id:
+                booking_details = self.get_booking_details(booking_id)  # Fetch details of this specific booking
+                self.print_ticket(booking_details)  # Print ticket with fetched details
+            else:
+                print("Failed to save booking.")
+
         else:
             print("Booking cancelled.")
             self.status = "Cancelled"
-
-    def insert_seat(self, seat_id, theatre_id):
-        """Insert a new seat into the seat table."""
-        row_letter = seat_id[0]  # Assuming seat_id is formatted as 'F2', extract 'F'
-        number = int(seat_id[1:])
-
-        mydb = get_db_connection()
-        if mydb is None:
-            print("Failed to connect to the database.")
-            return None
-
-        try:
-            mycursor = mydb.cursor()
-            query = "INSERT INTO seat (seat_id, theatre_id, row_letter, number) VALUES (%s, %s, %s, %s)"
-            mycursor.execute(query, (seat_id, theatre_id, row_letter, number))
-            mydb.commit()
-            print(f"Seat {seat_id} added to the seat table.")
-        except Exception as e:
-            print(f"An error occurred while inserting seat {seat_id}: {e}")
-            mydb.rollback()
-        finally:
-            mycursor.close()
-            mydb.close()
 
     def save_to_db(self):
         mydb = get_db_connection()
@@ -696,22 +642,86 @@ class Booking:
             mycursor.execute(insert_query, values)
             mydb.commit()
             print(f"\nBooking {self.booking_id} saved successfully.\n")
+            return self.booking_id  # Return the booking ID
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:
             mycursor.close()
             mydb.close()
 
-    def print_ticket(self):
-        print("========== TICKET ==========")
-        print(f"Booking ID: {self.booking_id}")
-        print(f"Customer ID: {self.customer_id}")
-        print(f"Movie ID: {self.movie_id}")
-        print(f"Showtime ID: {self.showtime_id}")
-        print(f"Theatre ID: {self.theatre_id}")
-        print(f"Booked Seats: {self.booked_seat}")  # Adjusted to display all booked seats
-        print(f"Status: {self.status}")
-        print("============================")
+    def get_booking_details(self, booking_id = None):
+        # Use centralized db connection from get_db_connection()
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return False
 
+        try:
+            mycursor = mydb.cursor(dictionary=True)
 
+            # SQL query to retrieve booking + name + price
+            select = """
+                    SELECT booking.booking_id, customer.customer_id, customer.name,  movie.title, show_time.theatre_id, 
+                    show_time.start_time, show_time.show_date, booking.total_price, booking.status
+                    FROM booking
+                    JOIN movie ON booking.movie_id = movie.movie_id
+                    -- since showtime has composite primary key
+                    JOIN show_time ON booking.showtime_id = show_time.showtime_id AND booking.movie_id = show_time.movie_id  
+                    JOIN customer ON booking.customer_id = customer.customer_id 
+                    """
 
+            # Add a WHERE clause if a specific booking_id is provided
+            if booking_id:
+                select += " WHERE booking.booking_id = %s"
+                mycursor.execute(select, (booking_id,))
+            else:
+                mycursor.execute(select)
+
+            results = mycursor.fetchall()
+
+            # If valid records are found, process and display them
+            if results:
+                bookings = []
+                for result in results:
+                    booking_record = {
+                        "booking_id": result["booking_id"],
+                        "customer_id": result["customer_id"],
+                        "name": result["name"],
+                        "title": result["title"],
+                        "theatre_id": result["theatre_id"],
+                        "start_time": result["start_time"],
+                        "show_date": result["show_date"],
+                        "total_price": result["total_price"],
+                        "status": result["status"]
+                    }
+                    bookings.append(booking_record)
+
+                return bookings  # Return the list of booking records
+            else:
+                print("No bookings found.")
+                return []
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return []
+        finally:
+            mycursor.close()
+            mydb.close()
+
+    def print_ticket(self, booking_details):
+        """Prints the ticket details for the latest booking."""
+        if booking_details:
+            ticket = booking_details[0]  # Only the first result since it's filtered by booking_id
+            print("========== TICKET ==========")
+            print(f"Booking ID: {ticket['booking_id']}")
+            print(f"Customer ID: {ticket['customer_id']}")
+            print(f"Customer Name: {ticket['name']}")
+            print(f"Movie Title: {ticket['title']}")
+            print(f"Theatre ID: {ticket['theatre_id']}")
+            print(f"Show Date: {ticket['show_date']}")
+            print(f"Start Time: {ticket['start_time']}")
+            print(f"Total Price: {ticket['total_price']}")
+            print(f"Status: {ticket['status']}")
+            print("============================")
+        else:
+            print("Ticket details not found.")

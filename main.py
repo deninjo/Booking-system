@@ -1,56 +1,124 @@
-# Import the Customer class
-from records import Customer, Movie, Theatre, Showtime, Seat, Price, Booking
+from records import Customer, Movie, Showtime, Price, Booking
 
 
-from records import Customer, Movie, Theatre, Seat, Booking
+def login():
+    """
+    Handles user login and determines access panel.
+    Returns: role (str) - 'manager' or 'cashier'
+    """
+    print("\n======= Main Menu ========")
+    print("1. Manager")
+    print("2. Cashier")
+    role = input("Select your role : ").strip()
+
+    if role == "1":
+        print("Accessing Manager's Panel...")
+        return "manager"
+    elif role == "2":
+        print("Accessing Cashier's Panel...")
+        return "cashier"
+    else:
+        print("Invalid selection. Please try again.")
+        return login()
+
+
+def manager_panel():
+    """
+    Manager-specific functionalities: Add movies, showtimes, and alter prices.
+    """
+    print("\n======= Manager's Panel =======")
+    while True:
+        print("\n1. Add a Movie")
+        print("2. Add a Showtime")
+        print("3. Alter Ticket Price")
+        print("4. Exit Manager Panel")
+        choice = input("Select an option: ").strip()
+
+        if choice == "1":
+            try:
+                print("")
+                movie = Movie()
+                movie.input_details()
+                movie.save_to_db()
+                print("Movie added successfully!")
+            except Exception as e:
+                print(f"An error occurred while adding the movie: {e}")
+
+        elif choice == "2":
+            try:
+                print("")
+                showtime = Showtime()
+                showtime.input_details()
+                showtime.save_to_db()
+                print("Showtime added successfully!")
+            except Exception as e:
+                print(f"An error occurred while adding the showtime: {e}")
+
+        elif choice == "3":
+            try:
+                print("")
+                price = Price()
+                print("Feature under construction. Implement alter_price logic here.")
+                # Placeholder for the alter_price functionality
+                # price.alter_price()
+            except Exception as e:
+                print(f"An error occurred while altering the ticket price: {e}")
+
+        elif choice == "4":
+            print("Exiting Manager Panel.")
+            break
+
+        else:
+            print("Invalid choice. Please try again.")
+
+
+def cashier_panel():
+    """
+    Cashier-specific functionalities: Handle customer and booking creation.
+    """
+    print("\n======= Cashier's Panel =======")
+    while True:
+        print("\n1. Handle a Booking")
+        print("2. Exit Cashier Panel")
+        choice = input("Select an option: ").strip()
+
+        if choice == "1":
+            try:
+                # Create a Customer and Booking object
+                print("")
+                customer = Customer()
+                customer.input_details()
+                customer.save_to_db()
+                print("Customer details saved successfully!")
+
+                booking = Booking()
+                booking.create_booking()
+                print("Booking completed successfully!")
+            except Exception as e:
+                print(f"An error occurred during booking: {e}")
+
+        elif choice == "2":
+            print("Exiting Cashier Panel.")
+            break
+
+        else:
+            print("Invalid choice. Please try again.")
+
 
 def main():
-    # Step 1: Create a Customer object and input detaills
+    """
+    Main entry point for the application.
+    """
+    print("\n\t\t\t\t\t\t\t\t\t\t ~ WELCOME TO BROADWAY CLASSICAL THEATRE ~ ")
+    role = login()
 
-    '''
-    customer = Customer()
-    customer.input_details()
-    customer.save_to_db()
-    '''
-
-
-
-    # Step 2: Create a Movie object and display available movies with showtimes
-
-
-    # Step 3: Select a movie and showtime for booking
-    booking = Booking()
-    booking.create_booking()
-    '''
-    # Step 4: Lookup the booking table to get theatre ID and booked seats
-    theatre = Theatre()
-    booked_seats = theatre.fetch_booked_seats()
-
-    # Step 5: Display the selected theatre's seat chart with booked seats marked
-    theatre.get_seating_chart(booked_seats)
-
-    # Step 6: Allow user to select a seat
-    selected_seat = input("Enter the Seat ID to book: ")
-
-    # Step 7: Check if the selected seat exists in the seat table
-    if not theatre.check_seat_exists(selected_seat):
-        theatre.save_new_seat(selected_seat)  # Create a new seat instance
-
-    # Step 8: Save the booking with status 'Confirmed'
-    booking = Booking(customer.customer_id, showtime_id, movie_id, theatre.theatre_id, selected_seat)
-    booking.save_to_db(status='Confirmed')
-
-    # Step 9: Allow user to remove a selected seat
-    remove_seat = input("Do you want to remove a selected seat? (yes/no): ")
-    if remove_seat.lower() == 'yes':
-        booking.update_status(selected_seat, 'Cancelled')  # Update the booking status to 'Cancelled'
-
-'''
+    if role == "manager":
+        manager_panel()
+    elif role == "cashier":
+        cashier_panel()
+    else:
+        print("Invalid role. Exiting the system.")
 
 
 if __name__ == "__main__":
     main()
-
-
-
-

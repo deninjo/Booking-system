@@ -69,12 +69,13 @@ class Movie:
         self.genre = input("Enter movie genre: ")
         self.rating = input("Enter movie rating: ")
         self.imdb = float(input("Enter imdb score: "))
-        self.duration = int(input("Enter duration in minutes: "))
+        self.duration = (input("Enter duration in minutes: "))
 
         # Ensuring duration is a positive integer
-        while (self.duration) < 0 or not self.duration.isdigit():
+        while not self.duration.isdigit():
             print("Duration should be a positive integer")
             self.duration = input("Enter duration in minutes: ")
+            self.duration = int(self.duration)
 
         self.year_of_release = int(input("Enter year of release: "))
 
@@ -643,6 +644,7 @@ class Booking:
             mydb.commit()
             print(f"\nBooking {self.booking_id} saved successfully.\n")
             return self.booking_id  # Return the booking ID
+
         except Exception as e:
             print(f"An error occurred: {e}")
         finally:

@@ -277,7 +277,13 @@ JOIN theatre ON show_time.theatre_id = theatre.theatre_id
 WHERE movie.title = 'Pulp Fiction';
 
 
-
+-- booking + name + price
+SELECT booking.booking_id, customer.customer_id, customer.name,  movie.title, show_time.theatre_id, show_time.start_time, show_time.show_date, booking.total_price, booking.status
+FROM booking
+JOIN movie ON booking.movie_id = movie.movie_id
+-- since showtime has composite primary key
+JOIN show_time ON booking.showtime_id = show_time.showtime_id AND booking.movie_id = show_time.movie_id  
+JOIN customer ON booking.customer_id = customer.customer_id ;
 
 
 

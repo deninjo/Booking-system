@@ -56,9 +56,6 @@ CREATE TABLE seat(
     PRIMARY KEY(seat_id, theatre_id),
     FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE
 );
-ALTER TABLE seat
-MODIFY seat_id VARCHAR(4) NOT NULL;
-
 DROP TABLE seat;
 
 CREATE TABLE price(
@@ -89,16 +86,6 @@ CREATE TABLE booking(
     FOREIGN KEY (theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE,
     FOREIGN KEY(booked_seat) REFERENCES seat(seat_id) ON DELETE CASCADE
 );
-
-ALTER TABLE booking
-ADD theatre_id VARCHAR(4) NULL AFTER showtime_id,
-ADD CONSTRAINT fk_theatre
-    FOREIGN KEY (theatre_id) REFERENCES theatre(theatre_id)
-    ON DELETE SET NULL;
-    
-ALTER TABLE booking
-MODIFY booked_seat VARCHAR(4) NOT NULL;
-
 DROP TABLE booking;
 
 
@@ -163,6 +150,7 @@ VALUES ('IIB', '3D', "'A': 12, 'B': 12, 'C': 12, 'D': 14, 'E': 14, 'F': 14, 'G':
 
 DELETE FROM theatre
 where theatre_id = 'IIB';
+
 SELECT * FROM theatre;
 
 UPDATE theatre

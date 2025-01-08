@@ -86,14 +86,44 @@ def cashier_panel():
             try:
                 # Create a Customer and Booking object
                 print("")
-                customer = Customer()
-                customer.input_details()
-                customer.save_to_db()
-                print("Customer details saved successfully!")
 
-                booking = Booking()
-                booking.create_booking()
-                print("Booking completed successfully!")
+                # Step 1: Enquire if the customer is new or registered
+                customer_type = input("Is the customer registered? [y/n]: ").strip().lower()
+
+                if customer_type == 'y':  # Existing customer
+                    phone_number = input("Enter the customer's phone number: ").strip()
+
+                    # Check if the customer exists in the database
+                    customer = Customer()
+                    customer_id, name = customer.get_customer_details_by_phone(phone_number)
+
+                    if customer_id:
+                        print(f"Customer found! Name: {name}, Customer ID: {customer_id}")
+
+                        booking = Booking()
+                        booking.create_booking(customer_id)
+                        print("Booking completed successfully!")
+
+                    else:
+                        print("No customer found with the provided phone number.")
+                        return  # Exit if no customer is found
+
+
+
+
+                else:  # New customer
+                    customer = Customer()
+                    customer.input_details()
+                    customer.save_to_db()
+                    print("Customer details saved successfully!")
+
+                    booking = Booking()
+                    booking.create_booking()
+                    print("Booking completed successfully!")
+
+
+
+
             except Exception as e:
                 print(f"An error occurred during booking: {e}")
 

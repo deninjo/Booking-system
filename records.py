@@ -1,3 +1,4 @@
+import re
 import json
 import string
 from datetime import datetime
@@ -6,14 +7,22 @@ from db import get_db_connection
 
 class Customer:
     def __init__(self, name="", email="", phone_number="", student=0):
+        # Initializes the customer object with default values for customer details
         self.name = name
         self.email = email
         self.phone_number = phone_number
         self.student = student
 
     def input_details(self):
+        # Prompts the user to enter their customer details
         self.name = input("Enter name: ")
+
+        # Email validation
         self.email = input("Enter email address: ")
+        while not re.match(r"[^@]+@[^@]+\.[^@]+", self.email):
+            print("Invalid email format. Please try again.")
+            self.email = input("Enter email address: ")
+
         self.phone_number = input("Enter phone number (10 digits): ")
 
         # Ensure phone number is 10 digits
@@ -29,6 +38,7 @@ class Customer:
             self.student = input("Is student? [0] No  [1] Yes: ")
 
     def save_to_db(self):
+        # Saves the customer details to the database using a predefined SQL insert query
         # Use centralized db connection from get_db_connection()
         mydb = get_db_connection()
         if mydb is None:
@@ -55,8 +65,33 @@ class Customer:
             mydb.close()
 
 
+    def get_customer_details_by_phone(self, phone_number):
+        """Retrieve customer details (ID and name) based on phone number."""
+        mydb = get_db_connection()
+        if not mydb:
+            print("Database connection failed.")
+            return None, None  # Return None for both ID and name
+
+        try:
+            cursor = mydb.cursor()
+            query = "SELECT customer_id, name FROM customer WHERE phone_number = %s"
+            cursor.execute(query, (phone_number,))
+            result = cursor.fetchone()
+            if result:
+                return result[0], result[1]  # Return customer_id and name
+            else:
+                return None, None  # No customer found
+        except Exception as e:
+            print(f"Error retrieving customer details: {e}")
+            return None, None
+        finally:
+            cursor.close()
+            mydb.close()
+
+
 class Movie:
     def __init__(self, title="", genre="", rating="", imdb="", duration="", year_of_release=""):
+        # Initializes the movie object with default values for movie details
         self.title = title
         self.genre = genre
         self.rating = rating
@@ -65,6 +100,7 @@ class Movie:
         self.year_of_release = year_of_release
 
     def input_details(self):
+        # Prompts the user to enter movie details
         self.title = input("Enter movie title: ")
         self.genre = input("Enter movie genre: ")
         self.rating = input("Enter movie rating: ")
@@ -80,6 +116,8 @@ class Movie:
         self.year_of_release = int(input("Enter year of release: "))
 
     def save_to_db(self):
+        # Saves the movie details to the database using a predefined SQL insert query
+
         # Use centralized db connection from get_db_connection()
         mydb = get_db_connection()
         if mydb is None:
@@ -106,6 +144,8 @@ class Movie:
             mydb.close()
 
     def get_showtimes(self):
+        # Retrieves showtimes for the current movie from the database
+
         # Use centralized db connection from get_db_connection()
         mydb = get_db_connection()
         if mydb is None:
@@ -157,6 +197,8 @@ class Movie:
             mydb.close()
 
     def display_available_movies_with_showtimes(self):
+        # Displays the available movies with their corresponding showtimes
+
         showtimes = self.get_showtimes()  # Get showtimes for the movie
 
         if not showtimes:
@@ -187,11 +229,16 @@ class Movie:
 
 class Theatre:
     def __init__(self, theatre_id="", screen="", layout=None):
+        # Initializes the theatre object with default values for theatre details
         self.theatre_id = theatre_id
         self.screen = screen
         self.layout = layout if layout else {}  # Ensures that self.layout always holds a valid dictionary
 
     def load_from_db(self, theatre_id):
+        # Loads the theatre details from the database using the provided theatre_id.
+        # Sets the theatre_id, screen, and layout for the object.
+        # Returns True if the theatre details are successfully loaded; False otherwise.
+
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -230,7 +277,11 @@ class Theatre:
             mydb.close()
 
     def get_seating_chart(self, selected_seats, showtime_id):
-        booked_seats = set(self.fetch_booked_seats(showtime_id))  # Get booked seats from the database
+        # Displays the seating chart for the theatre, with booked seats marked as '**'.
+        # The selected seats are passed in and displayed alongside the booked seats.
+
+        # Get booked seats from the database
+        booked_seats = set(self.fetch_booked_seats(showtime_id))
 
         # Add newly selected seats to the booked seats for this display
         booked_seats.update(selected_seats)  # Using a set for efficient lookups
@@ -301,6 +352,7 @@ class Theatre:
 
 class Showtime:
     def __init__(self, showtime_id="", movie_id="", theatre_id="", show_date="", start_time=""):
+        # Initializes the showtime object with default values for showtime details
         self.showtime_id = showtime_id
         self.movie_id = movie_id
         self.theatre_id = theatre_id
@@ -308,6 +360,7 @@ class Showtime:
         self.start_time = start_time
 
     def input_details(self):
+        # Prompts the user to enter showtime details
         self.showtime_id = input("Enter Show Time ID (e.g WE-N): ").strip().upper()
         self.movie_id = input("Enter movie id (e.g 701): ")
         self.theatre_id = input("Enter theatre id (e.g IIB): ").strip().upper()
@@ -317,6 +370,8 @@ class Showtime:
         self.start_time = datetime.strptime(self.start_time, "%H:%M").time()
 
     def save_to_db(self):
+        # Saves the showtime details to the database using a predefined SQL insert query
+
         # Use centralized db connection from get_db_connection()
         mydb = get_db_connection()
         if mydb is None:
@@ -345,10 +400,16 @@ class Showtime:
 
 class Seat:
     def __init__(self, theatre_instance):
+        # Initializes the Seat object, holding a reference to the Theatre instance.
+        # The selected_seats list will keep track of the seats the user selects.
+
         self.theatre = theatre_instance # Reference to the Theatre instance
         self.selected_seats = []
 
     def select_seat(self, showtime_id):
+        # Allows the user to select seats for a specific showtime.
+        # Displays the seating chart and prompts for seat selection, checking for valid inputs and booked seats.
+
         booked_seats = self.theatre.fetch_booked_seats(showtime_id)
         self.theatre.get_seating_chart(booked_seats, showtime_id)
 
@@ -392,6 +453,9 @@ class Seat:
             print("No selected seats.")
 
     def is_seat_booked(self, seat_id):
+        # Checks if the given seat is already booked in the database.
+        # Returns True if the seat is booked, False otherwise.
+
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -412,12 +476,15 @@ class Seat:
 
 class Price:
     def __init__(self, price_id="", showtime_id="", seat_category="", price=0):
+        # Initializes the price object with default values for price details
         self.price_id = price_id
         self.showtime_id = showtime_id
         self.seat_category = seat_category
         self.price = price
 
     def load_from_db(self, showtime_id):
+        # Loads the price details from the database based on the provided showtime_id
+
         # Use centralized db connection from get_db_connection()
         mydb = get_db_connection()
         if mydb is None:
@@ -458,11 +525,13 @@ class Price:
             mydb.close()
 
     def alter_price(self):
+        # This method is intended to allow the manager to alter ticket prices
         pass
 
 
 class Booking:
     def __init__(self, booking_id="", customer_id="", showtime_id="", movie_id="", theatre_id="", booked_seat="", status=""):
+        # Initializes the booking object with default values for booking details
         self.booking_id = booking_id
         self.customer_id = customer_id
         self.showtime_id = showtime_id
@@ -473,12 +542,15 @@ class Booking:
         self.theatre = Theatre()
 
     def increment_string(self, s):
+        # Increments the booking ID by 1 and formats it as a three-digit string with leading zeros.
+
         prefix = s[:-3]  # Extract the prefix ('B')
         number = int(s[-3:])  # Extract the number ('001') and convert to int
         incremented_number = number + 1
         return f"{prefix}{incremented_number:03d}"  # Returns three-digit string with leading zeros
 
     def get_last_customer_id(self):
+        # Retrieves the last customer ID from the database.
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -497,6 +569,7 @@ class Booking:
             mydb.close()
 
     def get_last_booking_id(self):
+        # Retrieves the last booking ID from the database and returns a default "B000" if none is found.
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -556,18 +629,31 @@ class Booking:
             mycursor.close()
             mydb.close()
 
-    def create_booking(self):
-        # Step 1: Get the last customer ID
-        self.customer_id = self.get_last_customer_id()
-        if self.customer_id is None:
-            print("No customers found. Cannot create a booking.")
-            return
+    def create_booking(self, customer_id=None):
+        # Handles the creation of a booking
+        # - Retrieves the last customer ID and booking ID
+        # - Prompts the user for movie and showtime selections
+        # - Displays the available seating chart and handles seat selection
+        # - Inserts new seats if they do not exist in the database
+        # - Saves the booking to the database if confirmed by the user
 
-        # Step 2: Get the last booking ID and increment it
-        last_booking_id = self.get_last_booking_id()
-        self.booking_id = self.increment_string(last_booking_id)
+        # Step 1: Get customer ID
+        """
+        - If a customer ID is provided, use that for the booking.
+        - Otherwise, create a new customer and retrieve the customer ID.
+        """
+        if customer_id:
+            self.customer_id = customer_id  # Use the provided customer ID
+            last_booking_id = self.get_last_booking_id()
+            self.booking_id = self.increment_string(last_booking_id)
+        else:
+            # New registered customer: Get the last booking ID and increment it
+            self.customer_id = self.get_last_customer_id()
+            last_booking_id = self.get_last_booking_id()
+            self.booking_id = self.increment_string(last_booking_id)
 
-        # Step 3: Get available movies and showtimes from the Movie class
+
+        # Step 2: Get available movies and showtimes from the Movie class
         movie_instance = Movie()  # Create an instance of Movie
         showtimes = movie_instance.get_showtimes()  # Fetch showtimes from the database
 
@@ -628,6 +714,7 @@ class Booking:
             self.status = "Cancelled"
 
     def save_to_db(self):
+        # Saves the current booking details to the database and returns the booking ID.
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -652,6 +739,8 @@ class Booking:
             mydb.close()
 
     def get_booking_details(self, booking_id = None):
+        # Retrieves booking details from the database based on booking ID.
+
         # Use centralized db connection from get_db_connection()
         mydb = get_db_connection()
         if mydb is None:

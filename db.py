@@ -8,7 +8,8 @@ def get_db_connection():
             host='localhost',
             user='root',
             password='MySQLconnection99!',
-            database='ticket_booking'
+            database='ticket_booking',
+
         )
         print(".")
         return mydb

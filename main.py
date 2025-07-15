@@ -109,8 +109,6 @@ def cashier_panel():
                         return  # Exit if no customer is found
 
 
-
-
                 else:  # New customer
                     customer = Customer()
                     customer.input_details()

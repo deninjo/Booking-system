@@ -42,7 +42,7 @@ CREATE TABLE show_time(
     theatre_id VARCHAR(4) NOT NULL,
     show_date DATE NOT NULL,
     start_time TIME NOT NULL,
-    PRIMARY KEY(showtime_id, movie_id),
+    PRIMARY KEY(showtime_id, movie_id, theatre_id),
     FOREIGN KEY(movie_id) REFERENCES movie(movie_id) ON DELETE CASCADE,
     FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE
 );
@@ -73,9 +73,9 @@ CREATE TABLE booking(
     booking_id VARCHAR(5) NOT NULL,
     customer_id INT NOT NULL,
     showtime_id VARCHAR(5) NOT NULL,
-    movie_id INT NOT NULL,
-    theatre_id VARCHAR(4) NOT NULL,
-    booked_seat VARCHAR(4) NOT NULL,
+    movie_id INT,
+    theatre_id VARCHAR(4),
+    booked_seat VARCHAR(4),
     total_price DECIMAL(5,2) NOT NULL,
     booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     status VARCHAR(20) NOT NULL,
@@ -89,27 +89,17 @@ CREATE TABLE booking(
 DROP TABLE booking;
 
 
--- Debugging Table for booking table
-CREATE TEMPORARY TABLE IF NOT EXISTS debug_log (
-    log_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    log_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    message TEXT
-);
-
-TRUNCATE TABLE debug_log; -- clears records
-SELECT * FROM debug_log;
-
 SHOW TABLES;
 
 
 -- inserting values to customer table
 INSERT INTO customer(customer_id, name, email, phone_number, student, password)
 VALUES
-(101, "Kaskazini McOure", 'kaskazini@gmail.com', '0712345678', 0, 'xxxxx');
+(101, "Toxic Lyrikali", 'chinje@gmail.com', '0712345678', 0, 'asBhnN');
 
 INSERT INTO customer(name, email, phone_number, student, password)	
 VALUES 
-("Alladin's Carpet", 'magic77@gmail.com', '0787654321', 1, 'xxx');
+("Alladin's Carpet", 'magic77@gmail.com', '0787654321', 1, 'vbjiehri');
 
 INSERT INTO customer(name, email, phone_number, student, password)	
 VALUES 
@@ -117,12 +107,7 @@ VALUES
 
 INSERT INTO customer(name, email, phone_number, student, password)	
 VALUES 
-("Eren Jaegar", 'titanslayer@gmail.com', '0752677021', 0, 'xxxx');
-
-SELECT * FROM customer;
-UPDATE customer
-SET customer_id = 104
-WHERE customer_id = 105;
+("Eren Jaegar", 'titanslayer@gmail.com', '0752677021', 0, 'BIbbbbi');
 
 
 -- inserting values to movie table
@@ -153,6 +138,7 @@ where theatre_id = 'IIB';
 
 SELECT * FROM theatre;
 
+-- ensure layout is in JSON
 UPDATE theatre
 SET layout = '{"A": 10, "B": 10, "C": 12, "D": 14, "E": 14, "F": 14, "G": 16, "H": 16}'
 WHERE theatre_id = 'IA';
@@ -172,7 +158,7 @@ WHERE theatre_id = 'IIB';
 -- inserting values to show_time
 INSERT INTO show_time
 VALUES
-('WD-M', 701, 'IIB', '2024-9-11', '10:45:00');
+('WD-M', 701, 'IIB', '2024-9-11', '10:45:00'); -- add more showtimes
 
 SELECT * FROM show_time;
 
@@ -213,9 +199,7 @@ VALUES ('P14', 'WE-N', 'Executive', 750.00);
 INSERT INTO price
 VALUES ('P15', 'WE-N', 'Rear', 850.00);
 
-SELECT * FROM price ORDER BY price_id ASC;
-DELETE FROM price WHERE price_id = 'P9';
-TRUNCATE price;
+
 
 
 -- inserting values to seat table 
@@ -238,7 +222,7 @@ TRUNCATE booking;
 DELETE FROM booking where booking_id = 'B007';
 SELECT * FROM booking;
 
-ALTER TABLE ticket_booking.customer AUTO_INCREMENT = 105;
+ALTER TABLE ticket_booking.customer AUTO_INCREMENT = 107;
 
 
 

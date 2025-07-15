@@ -111,8 +111,8 @@ class Movie:
         while not self.duration.isdigit():
             print("Duration should be a positive integer")
             self.duration = input("Enter duration in minutes: ")
-            self.duration = int(self.duration)
 
+        self.duration = int(self.duration) # <--- Move outside the loop
         self.year_of_release = int(input("Enter year of release: "))
 
     def save_to_db(self):
@@ -431,7 +431,7 @@ class Seat:
                 if row in self.theatre.layout and number.isdigit() and 1 <= int(number) <= self.theatre.layout[row]:
                     if selected_seat not in self.selected_seats:
                         # Check if the seat is already booked in the database
-                        if not self.is_seat_booked(selected_seat):
+                        if not self.is_seat_booked(selected_seat, showtime_id):
                             # Add the seat to the list of selected seats
                             self.selected_seats.append(selected_seat)
                             print(f"Seat {selected_seat} selected.")
@@ -452,10 +452,11 @@ class Seat:
         else:
             print("No selected seats.")
 
-    def is_seat_booked(self, seat_id):
-        # Checks if the given seat is already booked in the database.
-        # Returns True if the seat is booked, False otherwise.
-
+    def is_seat_booked(self, seat_id, showtime_id):
+        """
+        Checks if the given seat is already booked for the specific showtime and theatre.
+        Returns True if booked, otherwise False.
+        """
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -463,11 +464,15 @@ class Seat:
 
         try:
             mycursor = mydb.cursor()
-            query = "SELECT COUNT(*) FROM booking WHERE booked_seat = %s AND status = 'Confirmed'"
-            mycursor.execute(query, (seat_id,))
-            return mycursor.fetchone()[0] > 0  # Return True if the seat is booked
+            query = """
+                SELECT COUNT(*) FROM booking 
+                WHERE booked_seat LIKE %s AND status = 'Confirmed' 
+                  AND showtime_id = %s AND theatre_id = %s
+            """
+            mycursor.execute(query, (seat_id, showtime_id, self.theatre.theatre_id))
+            return mycursor.fetchone()[0] > 0
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"An error occurred while checking seat availability: {e}")
             return False
         finally:
             mycursor.close()
@@ -711,7 +716,16 @@ class Booking:
 
         else:
             print("Booking cancelled.")
-            self.status = "Cancelled"
+            if seat_instance.selected_seats:
+                self.booked_seat = ', '.join(seat_instance.selected_seats)
+                self.status = "Cancelled"
+                booking_id = self.save_to_db()
+                if booking_id:
+                    print(f"Booking {booking_id} saved with status 'Cancelled'.")
+                else:
+                    print("Failed to save cancelled booking.")
+            else:
+                print("No seat was selected, cancelled booking will not be saved.")
 
     def save_to_db(self):
         # Saves the current booking details to the database and returns the booking ID.

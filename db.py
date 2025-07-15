@@ -1,13 +1,17 @@
+import os
 import mysql.connector
 
+# Retrieve the password from the environment variable
+mysql_password = os.getenv("MYSQL_PASSWORD")
 
 def get_db_connection():
+    global mysql_password
     try:
         # Establish a database connection
         mydb = mysql.connector.connect(
             host='localhost',
             user='root',
-            password='MySQLconnection99!',
+            password=mysql_password,
             database='ticket_booking',
 
         )
@@ -36,3 +40,4 @@ def show_tables():
 
 
 
+get_db_connection()

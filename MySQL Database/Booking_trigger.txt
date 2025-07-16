@@ -2,40 +2,64 @@ CREATE DEFINER=`root`@`localhost` TRIGGER `booking_BEFORE_INSERT` BEFORE INSERT 
     DECLARE seat_category VARCHAR(15);
     DECLARE base_price DECIMAL(5,2);
     DECLARE is_student TINYINT(1);
+    DECLARE total_price DECIMAL(7,2) DEFAULT 0;
+    DECLARE row_letter CHAR(1);
+    DECLARE seat_token VARCHAR(10);
+    DECLARE seats_remaining TEXT;
+    DECLARE comma_index INT;
 
-    -- Determine seat category based on the row letter of the booked seat
-    SELECT row_letter INTO @row_letter
-    FROM seat
-    WHERE seat_id = NEW.booked_seat
-    LIMIT 1;
+    SET seats_remaining = NEW.booked_seat;
 
-    IF @row_letter IN ('A', 'B', 'C') THEN
-        SET seat_category = 'Front';
-    ELSEIF @row_letter IN ('D', 'E', 'F') THEN
-        SET seat_category = 'Executive';
-    ELSEIF @row_letter IN ('G', 'H') THEN
-        SET seat_category = 'Rear';
-    ELSE
-        SET seat_category = 'Rear'; -- default to 'Rear' for any other rows
-    END IF;
-
-    -- Get the price from the price table based on showtime_id and seat category
-    SELECT p.price INTO base_price
-    FROM price p
-    WHERE p.showtime_id = NEW.showtime_id
-    AND p.seat_category = seat_category
-    LIMIT 1;
-
-    -- Check if the customer is a student
+    -- Check if student
     SELECT student INTO is_student
     FROM customer
     WHERE customer_id = NEW.customer_id
     LIMIT 1;
 
-    -- Apply a 25% discount if the customer is a student
+    -- Loop through each seat
+    WHILE LENGTH(seats_remaining) > 0 DO
+        SET comma_index = LOCATE(',', seats_remaining);
+
+        IF comma_index > 0 THEN
+            SET seat_token = TRIM(SUBSTRING(seats_remaining, 1, comma_index - 1));
+            SET seats_remaining = TRIM(SUBSTRING(seats_remaining, comma_index + 1));
+        ELSE
+            SET seat_token = TRIM(seats_remaining);
+            SET seats_remaining = '';
+        END IF;
+
+        -- Get row letter of the seat
+        SELECT row_letter INTO row_letter
+        FROM seat
+        WHERE seat_id = seat_token
+        LIMIT 1;
+
+        -- Determine seat category
+        IF row_letter IN ('A', 'B', 'C') THEN
+            SET seat_category = 'Front';
+        ELSEIF row_letter IN ('D', 'E', 'F') THEN
+            SET seat_category = 'Executive';
+        ELSEIF row_letter IN ('G', 'H') THEN
+            SET seat_category = 'Rear';
+        ELSE
+            SET seat_category = 'Rear';
+        END IF;
+
+        -- Get base price for seat
+        SELECT price INTO base_price
+        FROM price
+        WHERE showtime_id = NEW.showtime_id
+        AND seat_category = seat_category
+        LIMIT 1;
+
+        -- Add to running total
+        SET total_price = total_price + base_price;
+    END WHILE;
+
+    -- Apply 25% discount if student
     IF is_student = 1 THEN
-        SET NEW.total_price = base_price * 0.75;
+        SET NEW.total_price = total_price * 0.75;
     ELSE
-        SET NEW.total_price = base_price;
+        SET NEW.total_price = total_price;
     END IF;
 END

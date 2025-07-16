@@ -86,7 +86,11 @@ CREATE TABLE booking(
     FOREIGN KEY (theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE,
     FOREIGN KEY(booked_seat) REFERENCES seat(seat_id) ON DELETE CASCADE
 );
-DROP TABLE booking;
+-- to allow booking more than 1 seat
+ALTER TABLE booking DROP FOREIGN KEY booking_ibfk_5;
+
+ALTER TABLE booking
+MODIFY booked_seat VARCHAR(100);
 
 
 SHOW TABLES;

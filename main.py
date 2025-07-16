@@ -58,9 +58,9 @@ def manager_panel():
             try:
                 print("")
                 price = Price()
-                print("Feature under construction. Implement alter_price logic here.")
+
                 # Placeholder for the alter_price functionality
-                # price.alter_price()
+                price.alter_price()
             except Exception as e:
                 print(f"An error occurred while altering the ticket price: {e}")
 

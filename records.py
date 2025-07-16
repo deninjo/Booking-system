@@ -220,7 +220,7 @@ class Movie:
             movie_id = data["movie_id"]
             print(f"\nMovie: {title}   ID: {movie_id}")
             for showtime in data["showtimes"]:
-                print(f"  Showtime ID: {showtime['showtime_id']}, "
+                print(f"    Showtime ID: {showtime['showtime_id']}, "
                       f"Theatre: {showtime['theatre_id']}, "
                       f"Screen: {showtime['screen']}, "
                       f"Date: {showtime['show_date']}, "
@@ -530,8 +530,74 @@ class Price:
             mydb.close()
 
     def alter_price(self):
-        # This method is intended to allow the manager to alter ticket prices
-        pass
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return
+
+        try:
+            mycursor = mydb.cursor(dictionary=True)
+
+            # Step 1: List distinct showtimes with their seat categories
+            mycursor.execute("SELECT DISTINCT showtime_id FROM price")
+            showtimes = mycursor.fetchall()
+
+            if not showtimes:
+                print("No price records available.")
+                return
+
+            print("\nAvailable Showtimes:")
+            for idx, showtime in enumerate(showtimes, start=1):
+                print(f"{idx}. {showtime['showtime_id']}")
+
+            choice = input("Select a showtime by ID: ").strip().upper()
+
+            # Step 2: Show current prices for that showtime
+            query = "SELECT * FROM price WHERE showtime_id = %s"
+            mycursor.execute(query, (choice,))
+            prices = mycursor.fetchall()
+
+            if not prices:
+                print(f"No prices found for showtime {choice}")
+                return
+
+            print("\nCurrent Prices:")
+            for idx, p in enumerate(prices, start=1):
+                print(f"{idx}. ID: {p['price_id']} | Seat Category: {p['seat_category']} | Price: {p['price']}")
+
+            price_id = input("\nEnter Price ID to update: ").strip().upper()
+
+            # Step 3: Check if price_id exists
+            mycursor.execute("SELECT * FROM price WHERE price_id = %s", (price_id,))
+            existing = mycursor.fetchone()
+            if not existing:
+                print(f"No price record found with ID: {price_id}")
+                return
+
+            # Step 4: Get and validate new price
+            new_price_input = input("Enter new price: ").strip()
+            try:
+                new_price = float(new_price_input)
+                if not (100 <= new_price <= 5000):  # Set an appropriate range
+                    print("Price should be between 100 and 5000.")
+                    return
+            except ValueError:
+                print("Invalid price value.")
+                return
+
+            # Step 5: Update price
+            update_query = "UPDATE price SET price = %s WHERE price_id = %s"
+            mycursor.execute(update_query, (new_price, price_id))
+            mydb.commit()
+
+            print("Price updated successfully.")
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            mydb.rollback()
+        finally:
+            mycursor.close()
+            mydb.close()
 
 
 class Booking:
@@ -767,7 +833,7 @@ class Booking:
             # SQL query to retrieve booking + name + price
             select = """
                     SELECT booking.booking_id, customer.customer_id, customer.name,  movie.title, show_time.theatre_id, 
-                    show_time.start_time, show_time.show_date, booking.total_price, booking.status
+                    show_time.start_time, show_time.show_date, booking.booked_seat, booking.total_price, booking.status
                     FROM booking
                     JOIN movie ON booking.movie_id = movie.movie_id
                     -- since showtime has composite primary key
@@ -794,6 +860,7 @@ class Booking:
                         "name": result["name"],
                         "title": result["title"],
                         "theatre_id": result["theatre_id"],
+                        "booked_seat": result["booked_seat"],
                         "start_time": result["start_time"],
                         "show_date": result["show_date"],
                         "total_price": result["total_price"],
@@ -823,6 +890,7 @@ class Booking:
             print(f"Customer Name: {ticket['name']}")
             print(f"Movie Title: {ticket['title']}")
             print(f"Theatre ID: {ticket['theatre_id']}")
+            print(f"Booked Seat: {ticket['booked_seat']}")
             print(f"Show Date: {ticket['show_date']}")
             print(f"Start Time: {ticket['start_time']}")
             print(f"Total Price: {ticket['total_price']}")

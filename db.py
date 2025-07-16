@@ -37,7 +37,3 @@ def show_tables():
 
     mycursor.close()
     mydb.close()
-
-
-
-get_db_connection()

@@ -796,13 +796,28 @@ class Booking:
         proceed = input("Proceed to checkout? (1 for Yes, 0 for No): ")
         if proceed == '1':
             self.booked_seat = ', '.join(seat_instance.selected_seats)
-            self.status = "Confirmed"
+            self.status = "Pending"  # Initially pending until payment is confirmed
 
             # Save booking to database and get the saved booking_id
             booking_id = self.save_to_db()
             if booking_id:
                 booking_details = self.get_booking_details(booking_id)  # Fetch details of this specific booking
                 self.print_ticket(booking_details)  # Print ticket with fetched details
+
+                # price verification
+                verify = input("\nPayment Verified?  (1 for Yes, 0 for No): ").strip().lower()
+
+                if verify == '1':
+                    self.verify_payment(booking_id)
+
+                    # Fetch updated details from database
+                    updated_details = self.get_booking_details(booking_id)
+                    print("\n--- Payment Verified ---")
+                    print("\n")
+                    self.print_ticket(updated_details)
+                else:
+                    print("Payment confirmation postponed. Ticket status remains Pending.")
+
             else:
                 print("Failed to save booking.")
 
@@ -902,6 +917,30 @@ class Booking:
         except Exception as e:
             print(f"An error occurred: {e}")
             return []
+        finally:
+            mycursor.close()
+            mydb.close()
+
+    def verify_payment(self, booking_id):
+        """Updates the booking status from 'Pending' to 'Confirmed' if payment is verified."""
+        mydb = get_db_connection()
+        if mydb is None:
+            print("Failed to connect to the database.")
+            return
+
+        try:
+            mycursor = mydb.cursor()
+            update_query = "UPDATE booking SET status = 'Confirmed' WHERE booking_id = %s AND status = 'Pending'"
+            mycursor.execute(update_query, (booking_id,))
+            mydb.commit()
+
+            if mycursor.rowcount > 0:
+                print(f"Booking {booking_id} payment verified and status updated to 'Confirmed'.")
+            else:
+                print("No pending booking found with that ID, or it's already confirmed.")
+
+        except Exception as e:
+            print(f"An error occurred: {e}")
         finally:
             mycursor.close()
             mydb.close()

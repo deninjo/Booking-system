@@ -85,7 +85,8 @@ def cashier_panel():
     print("\n======= Cashier's Panel =======")
     while True:
         print("\n1. Handle a Booking")
-        print("2. Logout / Return to Login Menu")
+        print("2. Ticket Payment Verification")
+        print("3. Logout / Return to Login Menu")
         choice = input("Select an option: ").strip()
 
         if choice == "1":
@@ -126,12 +127,38 @@ def cashier_panel():
                     print("Booking completed successfully!")
 
 
-
-
             except Exception as e:
                 print(f"An error occurred during booking: {e}")
 
+
         elif choice == "2":
+            try:
+                booking_id = input("\nEnter the Booking ID to verify payment: ").strip().upper()
+
+                booking = Booking()
+                booking_details = booking.get_booking_details(booking_id)
+
+                if booking_details and booking_details[0]["status"].lower() == "pending":
+                    booking.print_ticket(booking_details)
+
+                    verify = input("\nPayment Verified?  (1 for Yes, 0 for No): ").strip()
+
+                    if verify == '1':
+                        booking.verify_payment(booking_id)
+
+                        updated_details = booking.get_booking_details(booking_id)
+                        print("\n--- Payment Verified ---\n")
+                        booking.print_ticket(updated_details)
+                    else:
+                        print("Payment confirmation postponed. Ticket status remains Pending.")
+                else:
+                    print(f"Booking not found or not in 'Pending' status.")
+            except Exception as e:
+                print(f"An error occurred during payment verification: {e}")
+
+
+
+        elif choice == "3":
             print("Logging out...\n")
             break  # returns to login_menu()
 

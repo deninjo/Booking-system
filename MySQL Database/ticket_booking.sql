@@ -43,8 +43,8 @@ CREATE TABLE show_time(
     show_date DATE NOT NULL,
     start_time TIME NOT NULL,
     PRIMARY KEY(showtime_id, movie_id, theatre_id),
-    FOREIGN KEY(movie_id) REFERENCES movie(movie_id) ON DELETE CASCADE,
-    FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE
+    FOREIGN KEY(movie_id) REFERENCES movie(movie_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 DROP TABLE show_time;
 
@@ -54,7 +54,7 @@ CREATE TABLE seat(
     row_letter VARCHAR(1) NOT NULL,
     number INT NOT NULL,
     PRIMARY KEY(seat_id, theatre_id),
-    FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE
+    FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 DROP TABLE seat;
 
@@ -64,7 +64,7 @@ CREATE TABLE price(
     seat_category VARCHAR(15) NOT NULL,
     price DECIMAL(5,2) NOT NULL,
     PRIMARY KEY(price_id),
-    FOREIGN KEY(showtime_id) REFERENCES show_time(showtime_id) ON DELETE CASCADE
+    FOREIGN KEY(showtime_id) REFERENCES show_time(showtime_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 DROP TABLE price;
 
@@ -80,17 +80,19 @@ CREATE TABLE booking(
     booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     status VARCHAR(20) NOT NULL,
     PRIMARY KEY(booking_id),
-    FOREIGN KEY(customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE,
-    FOREIGN KEY(showtime_id) REFERENCES show_time(showtime_id) ON DELETE CASCADE,
-    FOREIGN KEY(movie_id) REFERENCES movie(movie_id) ON DELETE CASCADE,
-    FOREIGN KEY (theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE,
+    FOREIGN KEY(customer_id) REFERENCES customer(customer_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY(showtime_id) REFERENCES show_time(showtime_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY(movie_id) REFERENCES movie(movie_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY(booked_seat) REFERENCES seat(seat_id) ON DELETE CASCADE
 );
 -- to allow booking more than 1 seat
 ALTER TABLE booking DROP FOREIGN KEY booking_ibfk_5;
+ALTER TABLE booking MODIFY booked_seat VARCHAR(100);
 
-ALTER TABLE booking
-MODIFY booked_seat VARCHAR(100);
+-- to allow larger price values
+ALTER TABLE booking MODIFY total_price DECIMAL(7,2) NOT NULL;
+
 
 
 SHOW TABLES;
@@ -229,7 +231,12 @@ SELECT * FROM booking;
 ALTER TABLE ticket_booking.customer AUTO_INCREMENT = 107;
 
 
-
+-- customer frequency
+SELECT customer_id, COUNT(customer_id) AS frequency
+FROM ticket_booking.booking
+WHERE status = 'Confirmed'
+GROUP BY customer_id
+ORDER BY frequency DESC;
 
 -- showtimes for movies
 SELECT show_time.showtime_id, movie.movie_id, movie.title,theatre.theatre_id, theatre.screen, show_time.start_time, show_time.show_date

@@ -157,7 +157,7 @@ class Movie:
 
             # SQL query to retrieve showtimes for movies
             select = """
-            SELECT show_time.showtime_id, movie.movie_id, movie.title, 
+            SELECT show_time.showtime_id, movie.movie_id, movie.title, movie.genre, movie.IMDB, 
                    theatre.theatre_id, theatre.screen, show_time.start_time, 
                    show_time.show_date
             FROM show_time
@@ -176,6 +176,8 @@ class Movie:
                         "showtime_id": result["showtime_id"],
                         "movie_id": result["movie_id"],
                         "title": result["title"],
+                        "genre": result["genre"],
+                        "IMDB": result["IMDB"],
                         "theatre_id": result["theatre_id"],
                         "screen": result["screen"],
                         "start_time": result["start_time"],
@@ -210,15 +212,24 @@ class Movie:
         for showtime in showtimes:
             title = showtime["title"]
             movie_id = showtime["movie_id"]
+            genre = showtime["genre"]
+            imdb = showtime["IMDB"]
             if title not in movies:
-                movies[title] = {"movie_id": movie_id, "showtimes": []}
+                movies[title] = {
+                    "movie_id": movie_id,
+                    "genre": genre,
+                    "IMDB": imdb,
+                    "showtimes": []
+                }
             movies[title]["showtimes"].append(showtime)
 
         # Displaying the movies with their showtimes
         print("\t\t\t\t\t~Available Movies with their Showtimes:")
         for title, data in movies.items():
             movie_id = data["movie_id"]
-            print(f"\nMovie: {title}   ID: {movie_id}")
+            genre = data["genre"]
+            imdb = data["IMDB"]
+            print(f"\nMovie: {title}   ID: {movie_id}   Genre: {genre}   IMDB: {imdb}")
             for showtime in data["showtimes"]:
                 print(f"    Showtime ID: {showtime['showtime_id']}, "
                       f"Theatre: {showtime['theatre_id']}, "
@@ -731,24 +742,39 @@ class Booking:
         # Display available movies and their showtimes
         movie_instance.display_available_movies_with_showtimes()
 
-        # Step 4: Prompt user to enter movie ID and showtime ID
-        my_movie_id = input("\nEnter movie ID: ")
-        my_showtime_id = input("Enter showtime ID: ").upper()
 
-        # Retrieve theatre ID based on the selected showtime ID
-        # Assuming showtimes is a flat list of dictionaries
-        selected_showtime = next(
-            (item for item in showtimes if
-             item['showtime_id'] == my_showtime_id and item.get('movie_id') == int(my_movie_id)),
-            None
-        )
-        if selected_showtime:
-            self.theatre_id = selected_showtime['theatre_id']  # Setting the correct theatre
-            self.movie_id = my_movie_id
-            self.showtime_id = my_showtime_id
-        else:
-            print(f"No valid showtime found for Movie ID: {my_movie_id} and Showtime ID: {my_showtime_id}")
-            return
+
+        # Step 4: Prompt user to enter movie ID and showtime ID, with validation loop
+        while True:
+            try:
+                my_movie_id = input("\nEnter movie ID: ").strip()
+                my_showtime_id = input("Enter showtime ID: ").strip().upper()
+
+                # Validate if the provided movie ID is a number
+                if not my_movie_id.isdigit():
+                    print("Invalid movie ID. Please enter a numeric value.")
+                    continue
+
+                # Look for a matching showtime
+                selected_showtime = next(
+                    (item for item in showtimes if
+                     item['showtime_id'] == my_showtime_id and item.get('movie_id') == int(my_movie_id)),
+                    None
+                )
+
+                # Retrieve theatre ID based on the selected showtime ID
+                # Assuming showtimes is a flat list of dictionaries
+                if selected_showtime:
+                    self.theatre_id = selected_showtime['theatre_id']
+                    self.movie_id = my_movie_id
+                    self.showtime_id = my_showtime_id
+                    break  # Valid input found, exit loop
+                else:
+                    print(
+                        f"No valid showtime found for Movie ID: {my_movie_id} and Showtime ID: {my_showtime_id}. Please try again.\n")
+
+            except Exception as e:
+                print(f"An error occurred: {e}. Please try again.\n")
 
         # Step 5: Display the seating chart using Theatre class method
         # Load the theatre details and select seats
@@ -767,7 +793,7 @@ class Booking:
 
         # Step 7: Confirm booking
         print("\nSelected seats:", ", ".join(seat_instance.selected_seats))
-        proceed = input("Proceed to booking? (1 for Yes, 0 for No): ")
+        proceed = input("Proceed to checkout? (1 for Yes, 0 for No): ")
         if proceed == '1':
             self.booked_seat = ', '.join(seat_instance.selected_seats)
             self.status = "Confirmed"

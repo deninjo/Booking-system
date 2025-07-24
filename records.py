@@ -287,12 +287,12 @@ class Theatre:
             mycursor.close()
             mydb.close()
 
-    def get_seating_chart(self, selected_seats, showtime_id):
+    def get_seating_chart(self, selected_seats, showtime_id, movie_id):
         # Displays the seating chart for the theatre, with booked seats marked as '**'.
         # The selected seats are passed in and displayed alongside the booked seats.
 
         # Get booked seats from the database
-        booked_seats = set(self.fetch_booked_seats(showtime_id))
+        booked_seats = set(self.fetch_booked_seats(showtime_id, movie_id))
 
         # Add newly selected seats to the booked seats for this display
         booked_seats.update(selected_seats)  # Using a set for efficient lookups
@@ -328,7 +328,7 @@ class Theatre:
 
             print((' ' * padding) + seat_row)
 
-    def fetch_booked_seats(self, showtime_id):
+    def fetch_booked_seats(self, showtime_id, movie_id):
         """Fetch booked seats for a specific showtime.
         Returns:
             set: A set of booked seat IDs.
@@ -338,13 +338,14 @@ class Theatre:
         if mydb is None:
             print("Failed to connect to the database.")
             return booked_seats
+
         try:
             mycursor = mydb.cursor()
             query = """
             SELECT booked_seat FROM booking 
-            WHERE showtime_id = %s AND theatre_id = %s AND status = 'Confirmed'
+            WHERE showtime_id = %s AND theatre_id = %s AND movie_id = %s AND status = 'Confirmed'
             """
-            mycursor.execute(query, (showtime_id, self.theatre_id))
+            mycursor.execute(query, (showtime_id, self.theatre_id, movie_id))
 
             # Fetch all booked seats and add them to the set
             results = mycursor.fetchall()
@@ -417,12 +418,12 @@ class Seat:
         self.theatre = theatre_instance # Reference to the Theatre instance
         self.selected_seats = []
 
-    def select_seat(self, showtime_id):
+    def select_seat(self, showtime_id, movie_id):
         # Allows the user to select seats for a specific showtime.
         # Displays the seating chart and prompts for seat selection, checking for valid inputs and booked seats.
 
-        booked_seats = self.theatre.fetch_booked_seats(showtime_id)
-        self.theatre.get_seating_chart(booked_seats, showtime_id)
+        booked_seats = self.theatre.fetch_booked_seats(showtime_id, movie_id)
+        self.theatre.get_seating_chart(booked_seats, showtime_id, movie_id)
 
         self.selected_seats = []
         while True:
@@ -448,7 +449,7 @@ class Seat:
                             print(f"Seat {selected_seat} selected.")
 
                             # Display the seating chart with the newly selected seat marked
-                            self.theatre.get_seating_chart(booked_seats + self.selected_seats, showtime_id)  # Update with booked + selected
+                            self.theatre.get_seating_chart(booked_seats + self.selected_seats, showtime_id, movie_id)  # Update with booked + selected
                         else:
                             print("Seat is already booked. Choose a different seat.")
                     else:
@@ -784,7 +785,7 @@ class Booking:
             return
 
         seat_instance = Seat(theatre_instance)
-        seat_instance.select_seat(my_showtime_id)  # Pass the correct showtime ID
+        seat_instance.select_seat(my_showtime_id, self.movie_id)  # Pass the correct showtime ID + movie
 
         # Step 6: Check if each selected seat exists and insert if not
         for seat_id in seat_instance.selected_seats:
@@ -817,9 +818,6 @@ class Booking:
                     self.print_ticket(updated_details)
                 else:
                     print("Payment confirmation postponed. Ticket status remains Pending.")
-
-            else:
-                print("Failed to save booking.")
 
         else:
             print("Booking cancelled.")

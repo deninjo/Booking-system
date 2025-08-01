@@ -65,7 +65,10 @@ class Customer:
             mydb.close()
 
 
-    def get_customer_details_by_phone(self, phone_number):
+    # static method defines a method that belongs to the class,
+    # but does not need access to the instance (object) of that class.
+    @staticmethod
+    def get_customer_details_by_phone(phone_number):
         """Retrieve customer details (ID and name) based on phone number."""
         mydb = get_db_connection()
         if not mydb:
@@ -143,7 +146,8 @@ class Movie:
             mycursor.close()
             mydb.close()
 
-    def get_showtimes(self):
+    @staticmethod
+    def get_showtimes():
         # Retrieves showtimes for the current movie from the database
 
         # Use centralized db connection from get_db_connection()
@@ -231,7 +235,7 @@ class Movie:
             imdb = data["IMDB"]
             print(f"\nMovie: {title}   ID: {movie_id}   Genre: {genre}   IMDB: {imdb}")
             for showtime in data["showtimes"]:
-                print(f"    Showtime ID: {showtime['showtime_id']}, "
+                print(f"\t\t  Showtime ID: {showtime['showtime_id']}, "
                       f"Theatre: {showtime['theatre_id']}, "
                       f"Screen: {showtime['screen']}, "
                       f"Date: {showtime['show_date']}, "
@@ -499,7 +503,8 @@ class Price:
         self.seat_category = seat_category
         self.price = price
 
-    def load_from_db(self, showtime_id):
+    @staticmethod
+    def load_from_db(showtime_id):
         # Loads the price details from the database based on the provided showtime_id
 
         # Use centralized db connection from get_db_connection()
@@ -541,7 +546,8 @@ class Price:
             mycursor.close()
             mydb.close()
 
-    def alter_price(self):
+    @staticmethod
+    def alter_price():
         mydb = get_db_connection()
         if mydb is None:
             print("Failed to connect to the database.")
@@ -624,7 +630,8 @@ class Booking:
         self.status = status
         self.theatre = Theatre()
 
-    def increment_string(self, s):
+    @staticmethod
+    def increment_string(s):
         # Increments the booking ID by 1 and formats it as a three-digit string with leading zeros.
 
         prefix = s[:-3]  # Extract the prefix ('B')
@@ -632,7 +639,8 @@ class Booking:
         incremented_number = number + 1
         return f"{prefix}{incremented_number:03d}"  # Returns three-digit string with leading zeros
 
-    def get_last_customer_id(self):
+    @staticmethod
+    def get_last_customer_id():
         # Retrieves the last customer ID from the database.
         mydb = get_db_connection()
         if mydb is None:
@@ -651,7 +659,8 @@ class Booking:
             mycursor.close()
             mydb.close()
 
-    def get_last_booking_id(self):
+    @staticmethod
+    def get_last_booking_id():
         # Retrieves the last booking ID from the database and returns a default "B000" if none is found.
         mydb = get_db_connection()
         if mydb is None:
@@ -670,7 +679,8 @@ class Booking:
             mycursor.close()
             mydb.close()
 
-    def seat_exists(self, seat_id):
+    @staticmethod
+    def seat_exists(seat_id):
         """Check if the seat exists in the seat table."""
         mydb = get_db_connection()
         if mydb is None:
@@ -689,7 +699,8 @@ class Booking:
             mycursor.close()
         return exists
 
-    def insert_seat(self, seat_id, theatre_id):
+    @staticmethod
+    def insert_seat(seat_id, theatre_id):
         """Insert a new seat into the seat table."""
         row_letter = seat_id[0]  # Assuming seat_id is formatted as 'F2', extract 'F'
         number = int(seat_id[1:])
@@ -857,7 +868,8 @@ class Booking:
             mycursor.close()
             mydb.close()
 
-    def get_booking_details(self, booking_id = None):
+    @staticmethod
+    def get_booking_details(booking_id = None):
         # Retrieves booking details from the database based on booking ID.
 
         # Use centralized db connection from get_db_connection()
@@ -919,7 +931,8 @@ class Booking:
             mycursor.close()
             mydb.close()
 
-    def verify_payment(self, booking_id):
+    @staticmethod
+    def verify_payment(booking_id):
         """Updates the booking status from 'Pending' to 'Confirmed' if payment is verified."""
         mydb = get_db_connection()
         if mydb is None:
@@ -943,7 +956,8 @@ class Booking:
             mycursor.close()
             mydb.close()
 
-    def print_ticket(self, booking_details):
+    @staticmethod
+    def print_ticket(booking_details):
         """Prints the ticket details for the latest booking."""
         if booking_details:
             ticket = booking_details[0]  # Only the first result since it's filtered by booking_id

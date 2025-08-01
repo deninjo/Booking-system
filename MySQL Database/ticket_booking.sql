@@ -14,7 +14,7 @@ CREATE TABLE customer(
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (customer_id)
 );
-DROP TABLE customer;
+
 
 CREATE TABLE movie(
 	movie_id INT NOT NULL AUTO_INCREMENT,
@@ -26,7 +26,7 @@ CREATE TABLE movie(
     year_of_release YEAR NOT NULL,
     PRIMARY KEY(movie_id)
 );
-DROP TABLE movie;
+
 
 CREATE TABLE theatre(
 	theatre_id VARCHAR(4) NOT NULL,
@@ -34,7 +34,7 @@ CREATE TABLE theatre(
     layout VARCHAR(100) NOT NULL,
     PRIMARY KEY(theatre_id)
 );
-DROP TABLE theatre;
+
 
 CREATE TABLE show_time(
 	showtime_id VARCHAR(5) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE show_time(
     FOREIGN KEY(movie_id) REFERENCES movie(movie_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-DROP TABLE show_time;
+
 
 CREATE TABLE seat(
 	seat_id VARCHAR(4) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE seat(
     PRIMARY KEY(seat_id, theatre_id),
     FOREIGN KEY(theatre_id) REFERENCES theatre(theatre_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-DROP TABLE seat;
+
 
 CREATE TABLE price(
 	price_id VARCHAR(10) NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE price(
     PRIMARY KEY(price_id),
     FOREIGN KEY(showtime_id) REFERENCES show_time(showtime_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
-DROP TABLE price;
+
 
 
 CREATE TABLE booking(
@@ -76,7 +76,7 @@ CREATE TABLE booking(
     movie_id INT,
     theatre_id VARCHAR(4),
     booked_seat VARCHAR(4),
-    total_price DECIMAL(5,2) NOT NULL,
+    total_price DECIMAL(7,2) NOT NULL,
     booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     status VARCHAR(20) NOT NULL,
     PRIMARY KEY(booking_id),
@@ -90,12 +90,7 @@ CREATE TABLE booking(
 ALTER TABLE booking DROP FOREIGN KEY booking_ibfk_5;
 ALTER TABLE booking MODIFY booked_seat VARCHAR(100);
 
--- to allow larger price values
-ALTER TABLE booking MODIFY total_price DECIMAL(7,2) NOT NULL;
 
-
-
-SHOW TABLES;
 
 
 -- inserting values to customer table
@@ -126,7 +121,7 @@ VALUES ('Reservoir Dogs', 'Crime', 'R', 8.3, 99, 1992);
 INSERT INTO movie(title, genre, rating, IMDB, duration, year_of_release)
 VALUES ('The Prestige', 'Mystery', 'PG-13', 8.5, 130, 2006);
 
-SELECT * FROM movie;
+
 
 
 -- inserting values to theatre table
@@ -138,11 +133,6 @@ INSERT INTO theatre
 VALUES ('IIA', '2D', "'A': 12, 'B': 12, 'C': 12, 'D': 14, 'E': 14, 'F': 14, 'G': 16, 'H': 16");
 INSERT INTO theatre
 VALUES ('IIB', '3D', "'A': 12, 'B': 12, 'C': 12, 'D': 14, 'E': 14, 'F': 14, 'G': 16");
-
-DELETE FROM theatre
-where theatre_id = 'IIB';
-
-SELECT * FROM theatre;
 
 -- ensure layout is in JSON
 UPDATE theatre
@@ -165,8 +155,6 @@ WHERE theatre_id = 'IIB';
 INSERT INTO show_time
 VALUES
 ('WD-M', 701, 'IIB', '2024-9-11', '10:45:00'); -- add more showtimes
-
-SELECT * FROM show_time;
 
 
 -- inserting values to price table
@@ -206,8 +194,6 @@ INSERT INTO price
 VALUES ('P15', 'WE-N', 'Rear', 850.00);
 
 
-
-
 -- inserting values to seat table 
 INSERT INTO seat VALUES ('A1', 'IA', 'A', 1);
 INSERT INTO seat VALUES ('E5', 'IIB', 'E', 5);
@@ -224,6 +210,8 @@ VALUES('B002', 103, 'WD-A','IIA', 'E5', 'Cancelled');
 INSERT INTO booking(booking_id, customer_id, showtime_id, theatre_id, booked_seat, status)
 VALUES('B003', 102, 'WD-M','IA', 'H12', 'Confirmed');
 
+
+-- Queries
 TRUNCATE booking;
 DELETE FROM booking where booking_id = 'B007';
 SELECT * FROM booking;
@@ -258,6 +246,15 @@ FROM show_time
 JOIN movie ON show_time.movie_id = movie.movie_id
 JOIN theatre ON show_time.theatre_id = theatre.theatre_id
 WHERE movie.title = 'Pulp Fiction';
+
+select booking.booking_id, customer.customer_id, customer.name, movie.title, booking.showtime_id, booking.theatre_id, theatre.screen, show_time.show_date, show_time.start_time from booking
+join movie on booking.movie_id = movie.movie_id
+join customer on booking.customer_id = customer.customer_id
+join theatre on booking.theatre_id = theatre.theatre_id
+-- since showtime has composite primary key
+join show_time on booking.showtime_id = show_time.showtime_id and booking.movie_id = show_time.movie_id and booking.theatre_id = show_time.theatre_id
+order by booking_id;
+
 
 
 -- booking + name + price

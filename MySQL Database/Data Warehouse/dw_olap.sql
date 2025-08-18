@@ -1,5 +1,8 @@
 USE tb_data_warehouse;
 
+
+
+
 -- QUERIES
 
 -- Revenue by Theatre:
@@ -23,10 +26,10 @@ ORDER BY Theatre ASC;
 
 -- Student Discounts Usage: Analyze how many students book tickets to see if the discount is effective.
 SELECT dim_customer.student, 
-COUNT(fact_booking.booking_id) AS bookings,
-ROUND((COUNT(fact_booking.booking_id) * 100.0 / (SELECT COUNT(*) FROM fact_booking)), 1) AS Percentage_Bookings
-FROM fact_booking 
-JOIN dim_customer  ON fact_booking.customer_id = dim_customer.customer_id
+count(fact_booking.booking_id) as bookings,
+round(((count(fact_booking.booking_id) / (SELECT COUNT(*) FROM fact_booking)) * 100), 1) as percentage_bookings
+FROM fact_booking
+JOIN dim_customer ON fact_booking.customer_id = dim_customer.customer_id
 GROUP BY dim_customer.student;
 
 -- Compare Revenue Between Student and Non-Student

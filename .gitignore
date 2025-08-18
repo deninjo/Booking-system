@@ -2,3 +2,5 @@
 __pycache__/
 prac.py
 relevant.txt
+MySQL Database/Data Warehouse/mts_etl_job.py
+MySQL Database/Data Warehouse/etl_log.txt

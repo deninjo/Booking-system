@@ -6,26 +6,26 @@ A comprehensive Movie Ticketing System built with Python and MySQL that manages 
 
 ## 📋 Table of Contents
 
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Prerequisites](#prerequisites)
-- [Installation & Setup](#installation--setup)
-  - [Database Setup](#database-setup)
-  - [Remote Database Access](#remote-database-access)
-  - [Python Environment Setup](#python-environment-setup)
-- [Running the System](#running-the-system)
-- [Power BI Integration](#power-bi-integration)
-  - [ODBC Configuration](#odbc-configuration)
-  - [Power BI Connection](#power-bi-connection)
-  - [Data Warehouse Analytics](#data-warehouse-analytics)
-- [Database Distribution](#database-distribution)
-  - [Master-Slave Replication Setup](#master-slave-replication-setup)
-  - [Monitoring Replication](#monitoring-replication)
+- [Features](#-features)
+- [Project Structure](#-project-structure)
+- [Prerequisites](#-prerequisites)
+- [Installation & Setup](#-installation-setup)
+  - [Database Setup](#-database-setup)
+  - [Remote Database Access](#-remote-database-access)
+  - [Python Environment Setup](#-python-environment-setup)
+- [Running the System](#-running-the-system)
+- [Power BI Integration](#-power-bi-integration)
+  - [ODBC Configuration](#-odbc-configuration)
+  - [Power BI Connection](#-power-bi-connection)
+  - [Data Warehouse Analytics](#-data-warehouse-analytics)
+- [Database Distribution](#-database-distribution)
+  - [Master-Slave Replication Setup](#-master-slave-replication-setup)
+  - [Monitoring Replication](#-monitoring-replication)
 - [Screenshots](https://github.com/deninjo/Booking-system/blob/master/Screenshots/README.md)
-- [Contributing](#contributing)
+- [Contributing](#-contributing)
 
 
-## ✨ Features
+## ✨ Features 
 
 - **Movie Management**: Add, view, and manage movie details
 - **Show Scheduling**: Configure movie showtimes and theaters
@@ -37,7 +37,7 @@ A comprehensive Movie Ticketing System built with Python and MySQL that manages 
 - **Distributed Architecture**: Master-slave replication for scalability
 - **Real-time Analytics**: Live dashboard updates and reporting
 
-## 📁 Project Structure
+## 📁 Project Structure 
 
 ```
 Booking-system/
@@ -55,7 +55,7 @@ Booking-system/
 └── README.md                          # This documentation
 ```
 
-## 🔧 Prerequisites
+## 🔧 Prerequisites 
 
 Before setting up the system, ensure you have:
 
@@ -66,9 +66,9 @@ Before setting up the system, ensure you have:
 - **MySQL ODBC Driver** (for Power BI integration)
 - **Windows/Linux** operating system with appropriate permissions
 
-## 🚀 Installation & Setup
+## 🚀 Installation & Setup 
 
-### Database Setup
+### Database Setup 
 
 1. **Install MySQL Server**
    ```bash
@@ -102,7 +102,7 @@ Before setting up the system, ensure you have:
    -- Check if triggers are created
    SHOW TRIGGERS;
 
-### Remote Database Access
+### Remote Database Access 
 
 To enable remote connections for Power BI and replication:
 
@@ -150,7 +150,7 @@ To enable remote connections for Power BI and replication:
    sudo ufw allow 3306/tcp
    ```
 
-### Python Environment Setup
+### Python Environment Setup 
 
 1. **Clone or Download the Repository**
    ```bash
@@ -179,7 +179,7 @@ To enable remote connections for Power BI and replication:
     )
    ```
 
-## 🎬 Running the System
+## 🎬 Running the System 
 
 1. **Start the Application**
    ```bash
@@ -205,7 +205,7 @@ To enable remote connections for Power BI and replication:
    6. Receive booking confirmation
    ```
 
-## 📊 Power BI Integration
+## 📊 Power BI Integration 
 
 ### ODBC Configuration
 
@@ -229,7 +229,7 @@ To enable remote connections for Power BI and replication:
    6. Click OK to save
    ```
 
-### Power BI Connection
+### Power BI Connection 
 
 1. **Connect to Database**
    ```
@@ -268,7 +268,7 @@ To enable remote connections for Power BI and replication:
    ORDER BY revenue DESC;
    ```
 
-### Data Warehouse Analytics
+### Data Warehouse Analytics 
 
 The included Power BI file (`Movie Ticketing System DW.pbix`) provides:
 
@@ -286,11 +286,11 @@ Average Ticket Price = DIVIDE([Total Revenue], [Booking Count])
 Occupancy Rate = DIVIDE([Booked Seats], [Total Seats])
 ```
 
-## 🔄 Database Distribution
+## 🔄 Database Distribution 
 
-### Master-Slave Replication Setup
+### Master-Slave Replication Setup 
 
-#### Master Server Configuration
+#### Master Server Configuration 
 
 1. **Create Replication User**
    ```sql
@@ -317,7 +317,7 @@ Occupancy Rate = DIVIDE([Booked Seats], [Total Seats])
    ```
    Note the `File` and `Position` values for slave configuration.
 
-#### Slave Server Configuration
+#### Slave Server Configuration 
 
 1. **Configure Slave Server**
    
@@ -356,7 +356,7 @@ Occupancy Rate = DIVIDE([Booked Seats], [Total Seats])
    START REPLICA;
    ```
 
-### Monitoring Replication
+### Monitoring Replication 
 
 ```sql
 -- Check replication status on slave
@@ -377,7 +377,7 @@ SHOW REPLICA STATUS\G
 View detailed screenshots of the system in action:
 [Screenshots of the working system](https://github.com/deninjo/Booking-system/blob/master/Screenshots/README.md)  
 
-## 🤝 Contributing
+## 🤝 Contributing 
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)

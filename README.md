@@ -2,7 +2,7 @@
 
 ![Movie Ticket Booking System](https://i.ibb.co/CbD1gPQ/1.png)
 
-A comprehensive Movie Ticket Booking System built with Python and MySQL that manages movie shows, customer bookings, seat selection, and pricing. The system includes data warehouse capabilities for analytics and supports distributed database architecture through master-slave replication.
+A comprehensive Movie Ticketing System built with Python and MySQL that manages movie shows, customer bookings, seat selection, and pricing. The system includes data warehouse capabilities for analytics and supports distributed database architecture through master-slave replication.
 
 ## 📋 Table of Contents
 
@@ -21,7 +21,7 @@ A comprehensive Movie Ticket Booking System built with Python and MySQL that man
 - [Database Distribution](#database-distribution)
   - [Master-Slave Replication Setup](#master-slave-replication-setup)
   - [Monitoring Replication](#monitoring-replication)
-- [Screenshots](#screenshots)
+- [Screenshots](https://github.com/deninjo/Booking-system/blob/master/Screenshots/README.md)
 - [Contributing](#contributing)
 
 
@@ -375,7 +375,7 @@ SHOW REPLICA STATUS\G
 ## 📸 Screenshots
 
 View detailed screenshots of the system in action:
-[System Screenshots](Screenshots/README.md)
+[Screenshots of the working system](https://github.com/deninjo/Booking-system/blob/master/Screenshots/README.md)  
 
 ## 🤝 Contributing
 
